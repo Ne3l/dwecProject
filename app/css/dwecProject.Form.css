@@ -1,0 +1,102 @@
+/* Form Styles*/
+
+/* Modal Styles*/
+.FormModalHeader {
+  background-color: cornflowerblue;
+  color: white;
+}
+
+.FormModalContent {
+  border: 1px solid cornflowerblue;
+  height:550px;
+}
+
+.FormInputDiv {
+  margin-top: 10px;
+}
+
+/* Common Text Inputs */
+.inputFormGroup {
+  margin-top: 10px;
+}
+
+.commonFieldLeft {
+  min-width: 120px;
+  color: white;
+  background-color: cornflowerblue;
+  text-align: left;
+}
+
+/* DropDown Inputs */
+.DropdownDiv {
+  margin-top: 0px;
+}
+
+
+.DropdownButton {
+  min-width: 130px;
+  height: 34px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+.DropDownUL{
+  margin-left:0px;
+}
+.scrollable-menu {
+  height: auto;
+  max-height: 150px;
+  overflow-x: hidden;
+}
+.scrollable-menu::-webkit-scrollbar {
+  width: 18px;
+}
+.scrollable-menu::-webkit-scrollbar-thumb {
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: cornflowerblue;
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+.itemSelected{
+  background-color:cornflowerblue;
+  color:black;
+}
+.itemSelected:hover{
+  background-color:cornflowerblue;
+}
+
+.inputRow{
+  margin-left:0px;
+  margin-top:5px;
+  width:100%;
+  white-space:nowrap;
+}
+.fieldLabel {
+  display: inline-block;
+  height: 34px;
+  border: 1px solid #c2cad8;
+  background-color: cornflowerblue;
+  vertical-align: top;
+  width:125px;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  color: white;
+  padding-left: 10px;
+  padding-top: 5px;
+  margin-left:2px;
+  margin-right:5px;
+}
+.input-right{
+  max-width:55%;
+  display: inline-block;
+}
+input.input-right:hover{
+  background-color:#E0EEEE;
+}
+textarea.input-right:hover{
+  background-color:#E0EEEE;
+}
+textarea{
+  border-top-right-radius: 60px;
+  border-bottom-right-radius: 60px;
+  border-bottom-left-radius: 60px;
+}
