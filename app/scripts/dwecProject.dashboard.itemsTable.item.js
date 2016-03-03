@@ -35,10 +35,13 @@
       base.getData = getData;
       base.options = $.extend({}, $.itemsTable.item.defaultOptions, options);
       //Render the item if the event is after the actual time (maybe temporary)
-      //if (moment(base.getData.startDate).diff(moment()) > 0) { //With options: + && previous == false
+      if (moment(base.getData.startDate).diff(moment()) > 0 && !base.options.previous) {
         base.render();
         base.addListeners();
-      //} // else if (moment(base.getData.startDate).diff(moment()) < 0 && previous) { base.render(); base.addListeners(); }
+      } else if (moment(base.getData.startDate).diff(moment()) < 0 && base.options.previous) {
+        base.render();
+        base.addListeners();
+      }
     };
 
     /**

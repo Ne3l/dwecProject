@@ -793,40 +793,6 @@
 <script src="scripts/dwecProject.dashboard.itemsTable.item.js" type="text/javascript"></script>
 <script type="text/javascript">
 
-  //First item plugin version (with data passed as options)
-//  $(document).ready(function() {
-//    new jQuery.tabs.item(".feeds", null, {
-//      eventType: "GOAL_PRIMARY",
-//      eventDesc: "Descripcion del evento de prueba.",
-//      currentDate: "10 hours"
-//    });
-//  });
-
-  //JSON that will be passed to the plugin
-//  var data = {
-//    "id": 57,
-//    "name": "Nuevo evento",
-//    "description": "Descripcion del Evento",
-//    "startDate": "2016-03-22 19:01",
-//    "endDate": "2016-02-22 19:01",
-//    "eventType": {
-//      "itemLabel": "microcicle",
-//      "itemValue": "MICROCICLE"
-//    },
-//    "status": {
-//      "itemLabel": "not defined",
-//      "itemValue": "NOT_DEFINED"
-//    },
-//    "eventGroup": {
-//      "id": 7,
-//      "name": "Evento 1",
-//      "description": "Evento de prueba"
-//    },
-//    "content": {
-//      "data": null
-//    }
-//  };
-
   function JSONSort() {
     //TODO Sort JSON elements by startDate key
   }
@@ -834,14 +800,11 @@
   $.getJSON("http://tomcat7-mycoachgate.rhcloud.com/rest/events/get/").done(function(data) {
     $.each(data, function(i, item) {
       console.log("Element " + i + " Content: " + item);
-      new jQuery.itemsTable.item(".feeds", item, null);
+      new jQuery.itemsTable.item(".feeds", item, {
+        previous: false
+      });
     });
   });
-
-  //Release candidate: item plugin version (with data passed as getData)
-  //$(document).ready(function() {
-    //new jQuery.tabs.item(".feeds", data, null);
-  //});
 
 </script>
 <!-- End plugin test -->
