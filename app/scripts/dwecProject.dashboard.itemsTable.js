@@ -19,7 +19,10 @@
             base.options = $.extend({}, $.dashboard.itemsTable.defaultOptions, options);
 
             var out = base.options.template.portlet;
-            out = base.replace(out, {portletTitle: base.options.template.portletTitle});
+            out = base.replace(out, {
+                portletTitle: base.options.template.portletTitle,
+                portletBody: base.options.template.portletBody
+            });
             out = base.replace(out, {
                 caption: base.options.template.caption,
                 actions: base.options.template.actions,
@@ -36,18 +39,23 @@
                 title: base.options.title
             });
 
-            //TODO: function to build tabs
-            //Begin examples
-            out = base.replace(out, {
+/*            out = base.replace(out, {
                 active: base.options.template.active,
                 tab: base.options.template.tab
-            });
+            });*/
 
-            // Create the containers
+            // Create the tabs
             out = base.replace(out, {
                 tabs: base.tabs(base.options.tabs)
             });
 
+            // Create body
+            out = base.replace(out, {tabContent: base.options.template.tabContent});
+
+            // Create the containers
+            out = base.replace(out, {
+                panes: base.panes(base.options.tabs)
+            });
 
             // Call their objects
 
@@ -55,6 +63,7 @@
             base.$el.html(out);
 
             base.getJ('http://tomcat7-mycoachgate.rhcloud.com/rest/events/get/', base.func, undefined);
+            console.log("okay!");
         };
 
         /**
@@ -86,6 +95,21 @@
             }
             return out;
         };
+        base.panes = function (tabs) {
+            var out = '';
+            var key;
+            for (key in tabs) {
+                if (tabs[key].type == 'tab') {
+                    //out += base.replace(base.options.template.paneTab, {})
+                    out += base.options.template.paneTab;
+                }
+                else {
+                    //out += base.replace(base.options.template.paneActive, {})
+                    out += base.options.template.paneActive;
+                }
+            }
+            return out;
+        };
         base.getJ = function (url, f, options) {
             'use strict';
             $.ajax(
@@ -110,9 +134,9 @@
     };
     $.dashboard.itemsTable.defaultOptions = {
         template: {
-            portlet: '<div class="portlet light ">{portletTitle}</div>',
+            portlet: '<div class="portlet light ">{portletTitle} {portletBody}</div>',
             portletTitle: '<div class="portlet-title tabbable-line">{caption}{actions}{nav}</div>',
-            portletBody: '<div class="portlet-body"></div>',
+            portletBody: '<div class="portlet-body">{tabContent}</div>',
             tabContent: '<div class="tab-content">{panes}</div>',
             caption: '<div class="caption">{icon} {subject}</div>',
             icon: '<i class="{iconClass} {fontClass}"></i>',
@@ -121,9 +145,9 @@
             buttonFullScreen: '<a class="btn btn-circle btn-icon-only btn-default fullscreen" href="#" data-original-title="" title=""> </a>',
             nav: '<ul class="nav nav-tabs">{tabs}</ul>',
             active: '<li class="active"><a href="#{id}" data-toggle="tab" role="tab" class="active">{title}</a></li>',
-            tab: '<li><a href="{id}" data-toggle="tab" role="tab">{title}</a></li>',
-            paneActive: '<div class="tab-pane active" id="tab_1_1">',
-            paneTab: '<div class="tab-pane active" id="tab_1_1">'
+            tab: '<li><a href="#{id}" data-toggle="tab" role="tab">{title}</a></li>',
+            paneActive: '<div class="tab-pane active" id="{id}"><div class="scroller" style="height: 290px;" data-always-visible="1" data-rail-visible1="1"><ul class="feeds"></ul></div></div>',
+            paneTab: '<div class="tab-pane" id="{id}"><div class="scroller" style="height: 290px;" data-always-visible="1" data-rail-visible1="1"><ul class="feeds"></ul></div></div>'
         },
         iconClass: "icon-globe",
         fontClass: 'font-green-sharp',
