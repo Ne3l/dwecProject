@@ -195,9 +195,7 @@
         } else {
           result[goodFields[key]] = goodData[key];
         }
-
       });
-      toastr.success('Element added successfully!');
       base.options.onSaveFunction(result);
       el.empty();
     };
