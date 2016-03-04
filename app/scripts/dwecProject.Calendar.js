@@ -168,7 +168,7 @@
       base.$bin.on("dragover", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        this.style.color = base.options.bin;
+        this.style.color = '#BBDEFB';
       });
 
       base.$bin.on("dragleave", function (event) {
