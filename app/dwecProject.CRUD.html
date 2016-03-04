@@ -26,6 +26,7 @@
   <link href="http://www.albertosoto.es/learn/dwec-prj/global/layout/css/css-all.css" rel="stylesheet" type="text/css"/>
   <link href="http://www.albertosoto.es/learn/dwec-prj/global/plugins/datatables/datatables.min.css" rel="stylesheet" type="text/css" />
   <link href="http://www.albertosoto.es/learn/dwec-prj/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" rel="stylesheet" type="text/css" />
+  <link href="css/dwecProject.Form.css" rel="stylesheet" type="text/css"/>
 </head>
 <!-- END HEAD -->
 
@@ -74,7 +75,8 @@
               </li>
               <li>
                 <a href="#">
-                  <i class="icon-user"></i> Something else here</a>
+                  <i class="icon-user"></i> Something else here
+                </a>
               </li>
               <li class="divider"></li>
               <li>
@@ -104,15 +106,15 @@
                 </div>
               </div>
             </div>
-            <div class="portlet-body">
-              <div id="crud"></div>
+            <div class="portlet-body row">
+              <div class="tableCrud col-md-12"></div>
+              <div id = "testGroups" class="col-md-12"></div>
+              <!--<div id = "table1" class="col-md-6"></div>
+              <div id = "table2" class="col-md-6"></div>-->
             </div>
           </div>
           <!-- END EXAMPLE TABLE PORTLET-->
         </div>
-
-
-
       </div>
     </div>
     <!-- END CONTENT BODY -->
@@ -164,8 +166,16 @@
 <script src="http://www.albertosoto.es/learn/dwec-prj/global/layout/layout-utils.js" type="text/javascript"></script>
 <!-- END THEME LAYOUT SCRIPTS -->
 <script src="scripts/dwecProject.CRUD.js" type="text/javascript"></script>
+<script src="scripts/dwecProject.Form.js"></script>
 </body>
 <script>
-  $("#crud").Dwec_CRUD(null,[{}]);
+  $(document).ready(function(){
+    $(".tableCrud").Dwec_CRUD(null,[{}]);
+    $("#testGroups").Dwec_CRUD(null,[{actions:"/eventGroup/structure/", ajaxTable: {
+      "url": "eventGroup/get/",
+      "dataSrc": ""
+    }}]);
+  });
+
 </script>
 </html>

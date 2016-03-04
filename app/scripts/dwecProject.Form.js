@@ -2,7 +2,6 @@
   if (!$.Plugin) {
     $.Plugin = new Object();
   }
-  ;
   $.Plugin.Form = function (el, getData, options) {
     // To avoid scope issues, use 'base' instead of 'this'
     // to reference this class from internal events and functions.
@@ -17,7 +16,8 @@
       base.options = $.extend({}, $.Plugin.Form.defaultOptions, options);
       base.render({
         display: base.options.display,
-        formData: base.options.formData
+        formData: base.options.formData,
+        onSaveFunction: base.options.onSaveFunction
       });
 
     };
@@ -30,6 +30,7 @@
         url: base.options.host + base.options.structure,
         method: "GET",
         success: function (data) {
+          //TODO: control de errores
           var subObj = "";
           obj = data['fields'];
           //Save default event Structure in default options.
@@ -41,7 +42,7 @@
               $.each(subObj, function (key2) {
                 aux2 += base.createDropDownElement(subObj[key2]);
               });
-              aux += base.createDropDownButton(obj[key],aux2);
+              aux += base.createDropDownButton(obj[key], aux2);
             } else {
               //If it's a simple field or HTML data.
               aux += base.createInputType(obj[key]);
@@ -49,6 +50,10 @@
             subObj = {};
             aux2 = "";
           });
+          /*
+           TODO render buttons (para toda action)=> renderiza
+           base.options.htmlRender.button con valores de base.options.
+           */
           base.printModalOrContainer(aux);
           base.addListeners(obj);
           //Fill fields if the plugin has received an object.
@@ -84,7 +89,7 @@
             }
             //Tests the rest.
           } else {
-            if($('#' + obj[key]['name']).val() == "" && base.testRequired(obj[key])) {
+            if ($('#' + obj[key]['name']).val() == "" && base.testRequired(obj[key])) {
               errorFields.push(obj[key]['name']);
             } else {
               okeyFields.push(obj[key]['name']);
@@ -100,6 +105,9 @@
         }
 
       });
+
+      //TODO: asociamos para cada boton de las acciones (ya renderizados), asociamos por id, la function
+
       //Delete all data of the plugin from DOM tree.
       $('.discardButton').on('click', function () {
         el.empty();
@@ -145,11 +153,13 @@
     base.createDropDownButton = function (obj, aux2) {
       var button = base.options.form.dropDownButton(obj['name'], obj['label'], aux2);
       var label = base.options.form.label(obj['label']);
-      return base.options.form.inputRow(label,button);
+      return base.options.form.inputRow(label, button);
     };
     //Creates a default input (with type specified and hidden too)
     base.createInputType = function (obj) {
       //TODO @bbenejam Improve type getter
+      //todo pasar a cristiano =>iterator objeto / attr opciones => automatizas
+      //siempre return form.inputRow (html de la funcion) // tarjeta roja
       var validate = "";
       var mayHidden = "";
       var form = base.options.form;
@@ -159,13 +169,12 @@
       if (base.testRequired(obj)) {
         validate = "required";
       }
-      if(obj['type'] == 'hidden'){
+      if (obj['type'] == 'hidden') {
         mayHidden = "hidden";
       }
-
-      if(obj['type'] == 'html'){
-        return form.inputRow(label,form.htmlInput(obj['name']),validate);
-      }else {
+      if (obj['type'] == 'html') {
+        return form.inputRow(label, form.htmlInput(obj['name']), validate);
+      } else {
         input = form.input(obj['name'], type, validate);
         return form.inputRow(label, input, mayHidden);
       }
@@ -173,9 +182,9 @@
     base.badValidation = function (errorFields) {
       var errorHtml = "";
       $.each(errorFields, function (key) {
-        errorHtml += base.options.error.listElement.format(errorFields[key]);
+        errorHtml += base.options.error.listElement.format({elementName: errorFields[key]});
       });
-      errorHtml = base.options.error.list.format(errorHtml);
+      errorHtml = base.options.error.list.format({listElements: errorHtml});
       toastr.error(errorHtml, 'Some Fields aren\'t OK:');
     };
     base.goodValidation = function (goodFields, goodData) {
@@ -187,8 +196,7 @@
           result[goodFields[key]] = goodData[key];
         }
       });
-
-      toastr.success('Element added successfully!');
+      base.options.onSaveFunction(result);
       el.empty();
     };
     //Get json from URI
@@ -235,21 +243,41 @@
             $('#' + inputs[key]['name']).addClass('btn-success').text(objectSent[inputs[key]['name']]);
           }
         } else if (inputs[key]['type'] == 'html') {
-          $('#'+ inputs[key]['name']).val(objectSent[inputs[key]['name']]);
+          $('#' + inputs[key]['name']).val(objectSent[inputs[key]['name']]);
         } else {
           $('#' + inputs[key]['name']).val(objectSent[inputs[key]['name']]);
         }
       });
     };
+    base.format = function (str, col) {
+      col = typeof col === 'object' ? col : Array.prototype.slice.call(arguments, 1);
+      return str.replace(/\{\{|\}\}|\{(\w+)\}/g, function (m, n) {
+        if (m == "{{") {
+          return "{";
+        }
+        if (m == "}}") {
+          return "}";
+        }
+        return col[n];
+      });
+    };
     base.init();
   };
-  String.prototype.format = function () {
-    var args = arguments;
-    return this.replace(/\{\{|\}\}|\{(\d+)\}/g, function (curlyBrack, index) {
-      return ((curlyBrack == "{{") ? "{" : ((curlyBrack == "}}") ? "}" : args[index]));
-    });
+  /*
+   String.prototype.format = function () {
+   var args = arguments;
+   return this.replace(/\{\{|\}\}|\{(\d+)\}/g, function (curlyBrack, index) {
+   return ((curlyBrack == "{{") ? "{" : ((curlyBrack == "}}") ? "}" : args[index]));
+   });
+   };
+   */
+  String.prototype.format = function (args) {
+    var newStr = this;
+    for (var key in args) {
+      newStr = newStr.replace('{' + key + '}', args[key]);
+    }
+    return newStr;
   };
-
   $.Plugin.Form.defaultOptions = {
     display: "modal",
     defaultTitle: "Add Element",
@@ -257,40 +285,88 @@
     structure: "events/structure",
     formData: "Hello",
     connectionErrorMessage: "Can't connect to Rest Service",
+    htmlRender: {
+      button: "<button id={id} type='button' class='btn {decorator}'>{label}</button>"
+    },
     containerStructure: function (htmlData) {
-      return "{0}<div class='text-right' style='margin-top:10px;'><button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button></div>".format(htmlData);
+      return "{content}<div class='text-right' style='margin-top:10px;'><button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button></div>".format({content: htmlData});
     },
     modalStructure: function (htmlData) {
-      return "<div class='modal fade in' id='myModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' style='display: block;'><div class='modal-dialog' role='document'><div class='modal-content FormModalContent'> <div class='modal-header FormModalHeader'> <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title' id='myModalLabel'>Add Element</h4> </div> <div class='modal-body'>{0}</div><div class='modal-footer'> <button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button> </div> </div> </div> </div>".format(htmlData)
+      return "<div class='modal fade in' id='myModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' style='display: block;'><div class='modal-dialog' role='document'><div class='modal-content FormModalContent'> <div class='modal-header FormModalHeader'> <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title' id='myModalLabel'>Add Element</h4> </div> <div class='modal-body'>{content}</div><div class='modal-footer'> <button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button> </div> </div> </div> </div>".format({content: htmlData})
     },
     form: {
-      label: function(labelName){return "<div class='fieldLabel'>{0}</div>".format(labelName);},
-      input: function(id,type,required){return "<input type='{1}' id='{0}' class='form-control input-circle-right input-right {2}'>".format(id,type,required)},
-      htmlInput: function (id,required) {
-        return "<textarea id='{0}' class='form-control input-right textareaStyle {1}' rows='5'></textarea>".format(id,required);
+      label: function (labelName) {
+        return "<div class='fieldLabel'>{labelName}</div>".format({labelName: labelName});
       },
-      inputRow: function(label, input, optionalHidden){return "<div class='row inputRow {2}'>{0}{1}</div>".format(label,input,optionalHidden);},
-      dropDownButton: function(id, buttonName, elementsHtml){return "<div class='dropdown input-right'><button class='btn dropdown-toggle sr-only DropdownButton' type='button' id='{0}' data-toggle='dropdown'>{1} <span class='caret'></span> </button> <ul class='dropdown-menu DropDownUL scrollable-menu' role='menu' aria-labelledby='dropdownMenu1'>{2}</ul></div>".format(id, buttonName, elementsHtml);},
+      input: function (id, type, required) {
+        return "<input type='{type}' id='{id}' class='form-control input-circle-right input-right {required}'>".format({
+          id: id,
+          type: type,
+          required: required
+        })
+      },
+      htmlInput: function (id, required) {
+        return "<textarea id='{id}' class='form-control input-right textareaStyle {required}' rows='5'></textarea>".format({
+          id: id,
+          required: required
+        });
+      },
+      inputRow: function (label, input, optionalHidden) {
+        return "<div class='row inputRow {optionalHidden}'>{label} {input}</div>".format({
+          label: label,
+          input: input,
+          optionalHidden: optionalHidden
+        });
+      },
+      dropDownButton: function (id, buttonName, elementsHtml) {
+        return "<div class='dropdown input-right'><button class='btn dropdown-toggle sr-only DropdownButton' type='button' id='{id}' data-toggle='dropdown'>{buttonName} <span class='caret'></span> </button> <ul class='dropdown-menu DropDownUL scrollable-menu' role='menu' aria-labelledby='dropdownMenu1'>{elementHtml}</ul></div>".format({
+          id: id,
+          buttonName: buttonName,
+          elementHtml: elementsHtml
+        });
+      },
       dropDownElement: function (id, itemName) {
-        return "<li role='presentation' id='{0}' class='listElement'><a role='menuitem' tabindex='-1' href='#'>{1}</a> </li>".format(id, itemName);
+        return "<li role='presentation' id='{id}' class='listElement'><a role='menuitem' tabindex='-1' href='#'>{itemName}</a> </li>".format({
+          id: id,
+          itemName: itemName
+        });
       }
     },
-    error: {
-      list: "<ul>{0}</ul>",
-      listElement: "<li>{0}</li>"
+    actions: [
+      {//=> id autogenerado?
+        label: "guardar", classDecorator: "btn-primary", click: function (data) {
+        console.log("guardar");
+      }
+      }
+      , {
+        label: "cancelar", classDecorator: "btn-red", click: function (data) {
+          console.log("cancelar");
+        }
+      }
+    ],
+    onSaveFunction: function () {
     },
-    fieldEditors: {},
-    data: {},
+    error: {
+      list: "<ul>{listElements}</ul>",
+      listElement: "<li>{elementName}</li>"
+    }
+    ,
+    fieldEditors: {}
+    ,
+    data: {}
+    ,
     eventStructure: {}
-  };
+  }
+  ;
   $.fn.Plugin_Form = function (getData, options) {
     return this.each(function () {
       (new $.Plugin.Form(this, getData, options));
     });
   };
-  // This function breaks the chain, but returns
-  // the myCorp.MyExample if it has been attached to the object.
+// This function breaks the chain, but returns
+// the myCorp.MyExample if it has been attached to the object.
   $.fn.getPlugin_Form = function () {
     this.data("Plugin.Form");
   };
-})(jQuery);
+})
+(jQuery);
