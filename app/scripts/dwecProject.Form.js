@@ -17,7 +17,8 @@
       base.render({
         display: base.options.display,
         formData: base.options.formData,
-        onSaveFunction: base.options.onSaveFunction
+        onSaveFunction: base.options.onSaveFunction,
+        hiddenButtons: base.options.hiddenButtons
       });
 
     };
@@ -139,10 +140,14 @@
     };
     //Renders code into modal or Container
     base.printModalOrContainer = function (aux) {
+      var hidden = "";
+      if(base.options.hiddenButtons == true){
+        hidden = 'hidden';
+      }
       if (base.options.display == "modal") {
-        base.el.html(base.options.modalStructure(aux));
+        base.el.html(base.options.modalStructure(aux,hidden));
       } else {
-        base.el.html(base.options.containerStructure(aux));
+        base.el.html(base.options.containerStructure(aux,hidden));
       }
     };
     //Creates dropDown Button
@@ -195,6 +200,7 @@
         } else {
           result[goodFields[key]] = goodData[key];
         }
+
       });
       base.options.onSaveFunction(result);
       el.empty();
@@ -279,6 +285,7 @@
     return newStr;
   };
   $.Plugin.Form.defaultOptions = {
+    hiddenButtons: false,
     display: "modal",
     defaultTitle: "Add Element",
     host: "http://tomcat7-mycoachgate.rhcloud.com/rest/",
@@ -288,11 +295,11 @@
     htmlRender: {
       button: "<button id={id} type='button' class='btn {decorator}'>{label}</button>"
     },
-    containerStructure: function (htmlData) {
-      return "{content}<div class='text-right' style='margin-top:10px;'><button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button></div>".format({content: htmlData});
+    containerStructure: function (htmlData,hidden) {
+      return "{content}<div class='text-right {hidden}' style='margin-top:10px;'><button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button></div>".format({content: htmlData,hidden:hidden});
     },
-    modalStructure: function (htmlData) {
-      return "<div class='modal fade in' id='myModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' style='display: block;'><div class='modal-dialog' role='document'><div class='modal-content FormModalContent'> <div class='modal-header FormModalHeader'> <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title' id='myModalLabel'>Add Element</h4> </div> <div class='modal-body'>{content}</div><div class='modal-footer'> <button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button> </div> </div> </div> </div>".format({content: htmlData})
+    modalStructure: function (htmlData,hidden) {
+      return "<div class='modal fade in' id='myModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' style='display: block;'><div class='modal-dialog' role='document'><div class='modal-content FormModalContent'> <div class='modal-header FormModalHeader'> <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title' id='myModalLabel'>Add Element</h4> </div> <div class='modal-body'>{content}</div><div class='modal-footer {hidden}'> <button type='button' class='btn btn-default discardButton' data-dismiss='modal'>Discard</button> <button type='button' class='btn btn-primary sendElement'>Add Element</button> </div> </div> </div> </div>".format({content: htmlData,hidden:hidden})
     },
     form: {
       label: function (labelName) {
@@ -345,6 +352,7 @@
       }
     ],
     onSaveFunction: function () {
+      Toastr.error("It's not defined");
     },
     error: {
       list: "<ul>{listElements}</ul>",
