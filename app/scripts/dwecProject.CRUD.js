@@ -14,6 +14,7 @@
         base.actionsArray = [];
         base.fieldsArray = [];
         base.dataTable = {};
+        base.table = null;
         // Add a reverse reference to the DOM object
         base.$el.data("Dwec.CRUD", base);
         base.init = function () {
@@ -36,23 +37,25 @@
          * This function is adding all the events of the plugin
          */
         base.addEvents = function () {
+            base.table = $("#table_" + base.id);
+
             //Button add on the element
             base.$el.find("[data-action = 'add']").click(function () {
                 base.doAdd($(this).data("uri"));
             });
 
             //Edit action, this will open a form
-            $("#table_" + base.id).on('click', 'span[data-action = "set"]', function () {
+            base.table.on('click', 'span[data-action = "set"]', function () {
                 base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
             });
 
             //Show action, this will open a form
-            $("#table_" + base.id).on('click', 'span[data-action = "find"]', function () {
+            base.table.on('click', 'span[data-action = "find"]', function () {
                 base.doShow($(this).siblings("input").val());
             });
 
             //This directly deletes directly the
-            $("#table_" + base.id).on('click', 'span[data-action = "clear"]', function () {
+            base.table.on('click', 'span[data-action = "clear"]', function () {
                 base.doDelete($(this).data("uri"), $(this).siblings("input").val());
             });
 
@@ -81,39 +84,47 @@
          */
         base.doAdd = function (uri) {
             var o = {};
-            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                structure: base.options.actions, onSaveFunction: function (data) {
-                    for (var i = 0; i < base.fieldsArray.length; i++) {
-                        //TODO: Apply the filters to construct a correct object, important for the matrioska of events
-                        o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
+            try {
+                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), {groupId: 32}, {
+                    structure: base.options.actions, onSaveFunction: function (data) {
+                        for (var i = 0; i < base.fieldsArray.length; i++) {
+                            //TODO: Apply the filters to construct a correct object, important for the matrioska of events
+                            o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
+                        }
+                        console.log(JSON.stringify(o));
+                        base.doProcessRequest(uri, "POST", o, function () {
+                            toastr.success("Element correctly added");
+                            base.dataTable.ajax.reload(null, false);
+                        })
                     }
-                    console.log(JSON.stringify(o));
-                    base.doProcessRequest(uri, "POST", o, function () {
-                        toastr.success("Element correctly added");
-                        base.dataTable.ajax.reload();
-                    })
-                }
-            });
+                });
+            }
+            catch (e) {
+            }
         };
 
         base.doUpdate = function (o, uri) {
-            //TODO update action
-            var newObject = {};
-            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                formData: JSON.parse(o),
-                structure: base.options.actions,
-                onSaveFunction: function (data) {
-                    for (var i = 0; i < base.fieldsArray.length; i++) {
-                        //TODO: refator once is corrected
-                        newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
+            try {
+                //TODO update action
+                var newObject = {};
+                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                    formData: JSON.parse(o),
+                    structure: base.options.actions,
+                    onSaveFunction: function (data) {
+                        for (var i = 0; i < base.fieldsArray.length; i++) {
+                            //TODO: refator once is corrected
+                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
+                        }
+                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
+                            toastr.success("Element correctly edited");
+                            base.dataTable.ajax.reload(null, false);
+                        })
                     }
-                    base.doProcessRequest(base.format(uri, {id:JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
-                        toastr.success("Element correctly edited");
-                        base.dataTable.ajax.reload();
-                    })
-                }
-            });
+                });
+            }
+            catch (e) {
 
+            }
         };
 
         base.doShow = function (o) {
@@ -123,13 +134,26 @@
         };
 
         base.doDelete = function (uri, o) {
-            base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function (data) {
+            base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
                 toastr.success("This element has been correctly removed", "Deleting");
-                base.dataTable.ajax.reload();
+                try {
+                    base.dataTable.ajax.reload(null, false);
+                    base.dataTable.clear(); //Need this in case of removing last element
+                }
+                catch (e) {
+                    console.log(e);
+                }
             });
         };
 
         //AJAX
+        /**
+         * Reusable function to process all the ajax requests made in the plugin
+         * @param url
+         * @param method
+         * @param data
+         * @param callbackSuccess
+         */
         base.doProcessRequest = function (url, method, data, callbackSuccess) {
             $.ajax({
                 headers: {
@@ -140,26 +164,28 @@
                 url: base.options.host + url,
                 dataType: "json",
                 data: JSON.stringify(data),
-                statusCode: {
-                    400: function () {
-                        toastr.error("400 error");
-                    },
-                    404: function () {
-                        toastr.error("404 error");
-                    },
-                    405: function () {
-                        toastr.error("405 error");
-                    },
-                    415: function () {
-                        toastr.error("415 error");
-                    },
-                    500: function () {
-                        toastr.error("500 error");
-                    }
-                }
+                statusCode: base.getHttpStatusFromOptions(base.options.httpStatus)
             }).done(function (data) {
                 callbackSuccess(data);
             })
+        };
+
+        /**
+         * Returns an object with the status codes of http request using the messages of the options given by a user.
+         * @param o
+         * @returns {{}}
+         */
+        base.getHttpStatusFromOptions = function (o) {
+            var statusObject = {};
+            $.each(o, function (k, v) {
+                statusObject[k] = (k.indexOf('2') == 0) ? function () {
+                    toastr.success(v);
+                } : function () {
+                    toastr.error(v);
+                }
+            });
+
+            return statusObject;
         };
 
         //EXTERNAL BUTTON
@@ -219,10 +245,9 @@
 
         /**
          * Generic function that choose which method call according to the "o" value
-         * @param o
          * @returns {*}
          */
-        base.getHeader = function (o) {
+        base.getHeader = function () {
             var elements = base.format(base.options.templates.cell, {content: "actions"});
             elements += base.format(base.options.templates.cell, {content: '<input id = "selectAll_' + base.id + '" type="checkbox" class="checkboxes"/>'});
             elements += base.getHeaderByStructure();
@@ -257,15 +282,14 @@
 
         /**
          * Return the data that datatables needs to show the content of the table. The first two represents the actions and the checkboxes
-         * @param o
          * @returns {*[]}
          */
-        base.getDataForDataTables = function (o) {
+        base.getDataForDataTables = function () {
             var data = [{
                 "data": null,
                 "searchable": false,
                 "orderable": false,
-                render: function (data, type, full, meta) {
+                render: function (data, type, full) {
                     return base.getRapidActions() + base.getInputHiddenSerialized(JSON.stringify(full));
                 }
             },
@@ -291,23 +315,45 @@
          * @returns {*}
          */
         base.doGenerateDatatablesObject = function (data) {
-            base.dataTable = $("#table_" + base.id).DataTable({
-                rowId: base.options.idColumn,
-                responsive: {details: false},
-                aLengthMenu: [
-                    [5, 10, 25, 50, 100, -1],
-                    [5, 10, 25, 50, 100, "All"]
-                ],
-                "ajax": {
-                    "url": base.options.host + base.options.ajaxTable.url,
-                    "dataSrc": ""
-                },
-                "columnDefs": [
-                    {className: "dt-center", "targets": [0, 1]}
-                ],
-                'order': [],
-                "columns": data
-            });
+            try {
+                base.dataTable = $("#table_" + base.id).DataTable({
+                    rowId: base.options.idColumn,
+                    responsive: {details: false},
+                    aLengthMenu: [
+                        [5, 10, 25, 50, 100, -1],
+                        [5, 10, 25, 50, 100, "All"]
+                    ],
+                    "sAjaxDataProp": "",
+                    "ajax": function (data, callback, settings) {
+                        settings.jqXHR = $.ajax({
+                            url: base.options.host + base.options.ajaxTable.url,
+                            dataType: "json",
+                            statusCode: {
+                                204: function () {
+                                    console.log("204");
+                                    base.$el.find(".sorting").click();//This helps to quit the loading
+                                }
+                            }
+                        });
+                        settings.jqXHR.done(function (d) {
+                            if (typeof d != "undefined") {
+                                callback(d);
+                            }
+                        });
+                    },
+                    "columnDefs": [
+                        {className: "dt-center", "targets": [0, 1]}
+                    ],
+                    'order': [],
+                    "columns": data,
+                    "language": {
+                        "emptyTable": base.options.emptyTableMessage
+                    }
+                });
+            }
+            catch (e) {
+                console.log("Error generating datatables" + e);
+            }
         };
 
         /**
@@ -317,11 +363,13 @@
         base.getRapidActions = function () {
             var rapidActions = "";
             for (var i = 0; i < base.actionsArray.length; i++) {
-                rapidActions += (base.actionsArray[i].type == "cell") ? base.format(base.options.templates.rapidAction, {
-                    icon: base.actionsArray[i].style,
-                    action: base.getButtonName(base.actionsArray[i].uriTemplate),
-                    uri: base.actionsArray[i].uriTemplate
-                }) : "";
+                if (base.actionsArray[i].type == "cell") {
+                    rapidActions += base.format(base.options.templates.rapidAction, {
+                        icon: base.actionsArray[i].style,
+                        action: base.getButtonName(base.actionsArray[i].uriTemplate),
+                        uri: base.actionsArray[i].uriTemplate
+                    })
+                }
             }
 
             return rapidActions;
@@ -357,9 +405,9 @@
         host: "http://tomcat7-mycoachgate.rhcloud.com/rest/",
         actions: "events/structure/",
         ajaxTable: {
-            "url": "events/get/",
-            "dataSrc": ""
+            "url": "events/get/"
         },
+        emptyTableMessage: "No data available",
         idColumn: "id",
         templates: {
             table: "<table id='{id}' class='{classCss}'>{header}</table>",
@@ -373,6 +421,14 @@
         },
         classes: {
             table: "table table-striped table-bordered table-hover table-checkable order-column"
+        },
+        httpStatus: {
+            400: "Bad Request",
+            403: "Connection Refused",
+            404: "Not Found",
+            405: "Method Not Allowed",
+            415: "Unsupported Media Type",
+            500: "Internal Server Error"
         }
     };
 
@@ -396,9 +452,10 @@
             i++;
         });
     };
-    // This function breaks the chain
+// This function breaks the chain
     $.fn.getDwec_CRUD = function () {
         this.data("Dwec.CRUD");
     };
 })
 (jQuery);
+//TODO:put a option of the group at the moment to add, update/add matrioskas
