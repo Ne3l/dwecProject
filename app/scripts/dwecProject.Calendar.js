@@ -22,12 +22,13 @@
         base.init = function () {
             base.getData = getData;
             base.options = $.extend({}, $.Dwec.Calendar.defaultOptions, options);
-            base.$el.append("<div class='portlet light portlet-fit bordered calendar'><div class='portlet-title'><div class='caption'><i class='icon-layers font-green'></i><span class='caption-subject font-green sbold uppercase'>Calendar</span></div></div><div class='portlet-body'><div class='row'><div class='col-md-3 col-sm-12'><h3 class='event-form-title margin-bottom-20'>Draggable Events</h3><div class='external-events'><hr/><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='calendar1' class='has-toolbar'></div></div></div></div></div>");
+            base.$el.append(base.options.estructureWrapersCalendar);
 
             base.$eventBox = base.$el.find('.event_box');
             base.$calendar = base.$el.find('.calendar1');
             if(document.getElementById('calendarModal') == null){
                 $("body").append("<div id='calendarModal' class='modal fade' tabindex='-1' role='dialog'> <div class='modal-dialog'> <div class='modal-content'> <div class='modal-header'> <button type='button' class='close' data-dismiss='modal' aria-label='Closev><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title'>Information</h4> </div> <div class='modal-body'> <p id='content'></p> </div> <div class='modal-footer'> <button id='close' type='button' class='btn btn-default' data-dismiss='modal'>Close</button> <button type='button' id='accept' class='btn btn-primary' data-dismiss='modal'>Save changes</button> </div> </div></div></div>");
+                base.$calendarModal = $('#calendarModal');
             }
             base.renderBin();
             base.renderCalendar();
@@ -69,6 +70,11 @@
                     console.log(response);
                     fOnErrorCallback();
                 },
+                405: function (response) {
+                    console.log("Codigo 405 respuesta");
+                    console.log(response);
+                    fOnErrorCallback();
+                },
                 500: function (response) {
                     console.log("Codigo 500 respuesta");
                     console.log(response);
@@ -83,7 +89,7 @@
                 url: url,
                 method: method,
                 dataType: 'json',
-                data: JSON.stringify(sendData),
+                data: (sendData)? JSON.stringify(sendData): "",
                 statusCode: callBackFunctions
             });
         };
@@ -97,7 +103,7 @@
             base.$el.find('.fc-day').each(function (key, value) {
                 var $element = $(this);
 
-                $element.on("dragenter", function (event) {
+                $element.on("dragover", function (event) {
                     event.preventDefault();
                     event.stopPropagation();
                     this.style.backgroundColor = 'rgba(50,197,210,0.3)';
@@ -119,14 +125,14 @@
                     this.style.backgroundColor = 'rgba(255,255,255,1)';
                     var fechaStart = this.getAttribute('data-date') + "T12:01:00";
                     var fechaEnd = this.getAttribute('data-date') + "T13:01:00";
-                    var url = base.options.urlAdd;
-                    var sendData = {
+                    var url = base.options.dataUrls.host+base.options.dataUrls.addEvents//base.options.urlAdd;
+                    var sendData = { //TODO coger del formulario
                         "name": "Evento " + tipoEvento,
                         "description": "Descripcion del Evento",
                         "startDate": fechaStart,
                         "endDate": fechaEnd,
-                        "eventType": "SESSION", //TODO coger de options
-                        "status": "NOT_DEFINED", // TODO coger de options o de la informacion del propio generico que arrastro
+                        "eventType": "SESSION",
+                        "status": "NOT_DEFINED",
                         "eventGroup": {"id": event.originalEvent.dataTransfer.getData('idGeneric')},
                         "content": {
                             "data": [{"label": "Prueba", "note": "Loren ipsum"}, {"label": "Prueba", "note": "Loren ipsum"}]
@@ -149,11 +155,18 @@
                             start: fechaStart,
                             end: fechaEnd, //"2016-02-03T12:01:00"
                             color: color
+                            //allDay: true
                         };
                         base.$calendar.fullCalendar('renderEvent', myEvent);
-                        toastr.success("Evento añadido", "Evento dia " + myEvent.start);
+                        // toastr.success("Evento añadido", "Evento dia " + myEvent.start);
+                        toastr.success(myEvent.title, base.options.messages.addEvents.success);
                     };
-                    base.doAjax(url, 'POST', sendData, fOnSuccessCallback, base.options.connectionFail);
+
+                    var fOnErrorCallback = function fOnErrorCallback() {
+                        toastr.error("Ups!", base.options.messages.addEvents.error);
+                    };
+
+                    base.doAjax(url, 'POST', sendData, fOnSuccessCallback, fOnErrorCallback);
                 });
             });
         };
@@ -226,7 +239,8 @@
                 .replace("{attr}", "data-id='" + genericEvent.eventGroup.id + "'")
                 .replace("{name}", genericEvent.name))
                 .on('dragstart', onDragStart)
-                .css("background-color", genericEvent.content.data[0].value));
+                .css("background-color", genericEvent.content.data[0].value)
+                .attr( "id", genericEvent.id));
 
 
         };
@@ -240,12 +254,10 @@
          * @param error
          */
         base.changeDay = function (event, revertFunc, info, success, error) {
-
-            base.$calendarModal = $('#calendarModal');
-
+            base.$calendarModal.find("#modal-title").text(event.title);
             base.$calendarModal.find("#content").text(info);
             base.$calendarModal.find("#accept").on("click", function () {
-                var url = base.options.urlEdit + event.id;
+                var url = base.options.dataUrls.host+base.options.dataUrls.editEvent + event.id;
                 var sendData = {
                     id: event.id,
                     "startDate": event.start,
@@ -292,19 +304,19 @@
                 },
                 eventDrop: function eventDrop(event, delta, revertFunc) {
                     console.log(event);
-
-                    var info = event.title + " was dropped on " + event.start.format();
-                    var success = {title: "Evento modificado", description: "Evento dia " + event.start.format()};
-                    var error = {title: "Ups!", description: "No podemos conectar..."};
+                    var info = base.options.messages.editEvent.modalDrop; //event.title + " was dropped on " + event.start.format();
+                    //var success = {title: "Evento modificado", description: "Evento dia " + event.start.format()};
+                    var success = {title: event.title, description: base.options.messages.editEvent.successDrop};
+                    // var error = {title: "Ups!", description: "No podemos conectar..."};
+                    var error = {title: "Ups!", description: base.options.messages.editEvent.errorDrop};
                     base.changeDay(event, revertFunc, info, success, error);
                 },
                 eventResize: function eventResize(event, delta, revertFunc) {
-                    var info = event.title + " end is now " + event.end.format();
-                    var success = {
-                        title: "Evento modificado",
-                        description: "Evento dia " + event.start.format() + " hasta " + event.end.format()
-                    };
-                    var error = {title: "Ups!", description: "No podemos conectar..."};
+                    var info = base.options.messages.editEvent.modalResize;
+                    //var success = {title: "Evento modificado", description: "Evento dia " + event.start.format() + " hasta " + event.end.format()};
+                    //var error = {title: "Ups!", description: "No podemos conectar..."};
+                    var success = {title: event.title, description: base.options.messages.editEvent.successResize};
+                    var error = {title: "Ups!", description: base.options.messages.editEvent.errorResize};
 
                     base.changeDay(event, revertFunc, info, success, error);
                 },
@@ -312,15 +324,23 @@
                     console.log("X -> " + jsEvent.clientX);
                     console.log("Y -> " + jsEvent.clientY);
                     if (base.isEventOverDiv(jsEvent.clientX, jsEvent.clientY)) {
-                        base.$calendar.fullCalendar('removeEvents', event._id);
-                        var fOnSuccessCallback = function (id) {
-                            toastr.success("Evento " + event.title, "Eliminado");
-                        };
-                        var fOnErrorCallback = function () {
-                            toastr.error("Evento " + event.title, "Error al eliminar");
-                        };
+                        base.$calendarModal.find("#modal-title").text(event.title);
+                        base.$calendarModal.find("#content").text(base.options.messages.delEvents.modal);
 
-                        base.doAjax(base.options.urlDel + event._id, 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
+                        base.$calendarModal.find("#accept").on("click", function () {
+
+                            var fOnSuccessCallback = function (id) {
+                                base.$calendar.fullCalendar('removeEvents', event._id);
+                                toastr.success(event.title, base.options.messages.delEvents.success);
+                            };
+                            var fOnErrorCallback = function () {
+                                toastr.error(event.title, base.options.messages.delEvents.error);
+                            };
+
+                            base.doAjax(base.options.dataUrls.host+base.options.dataUrls.delEvents + event._id, 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
+                        });
+
+                        base.$calendarModal.modal('show');
                     }
                 },
                 events: function events(start, end, timezone, callback) {
@@ -328,11 +348,15 @@
                         var events = [];
                         for (var item in doc) {
                             var currentEventType = doc[item]["eventType"]["itemLabel"];
-                            if (currentEventType === "generic") {
-                                base.renderGenericEvents(doc[item]);
-                            } else if (true){ //TODO datafilters-> shown base.options.datafilter.shown.indexOf(currentEvenType) >= 0
+                            if (currentEventType === base.options.dataFilters.model) {
+                                if(base.$eventBox[0].innerHTML.indexOf(doc[item].id)==-1){
+                                    base.renderGenericEvents(doc[item]);
+                                }
+
+                            } else if (base.options.dataFilters.shown.indexOf(currentEventType) >= 0){
                                 // TODO aplicar config
                                 if (doc[item]['startDate'] != null) {
+                                    //if (true) { //TODO allday  -> doc[item]
                                     events.push({
                                         id: doc[item]['id'],
                                         title: doc[item]['name'],
@@ -340,12 +364,26 @@
                                         end: doc[item]['endDate'],
                                         allDay: true
                                     });
+                                    /* }else{
+                                     events.push({
+                                     id: doc[item]['id'],
+                                     title: doc[item]['name'],
+                                     start: doc[item]['startDate'],
+                                     end: doc[item]['     endDate']
+                                     });
+                                     }*/
                                 }
                             }
                         }
                         callback(events);
+                        toastr.success("", base.options.messages.getEvents.success);
                     };
-                    base.doAjax(base.options.urlGet, "GET", null, fOnSuccessCallback, base.options.connectionFail);
+
+                    var fOnErrorCallback= function fOnErrorCallback(){
+                        toastr.error("Ups!", base.options.messages.getEvents.error);
+                    };
+
+                    base.doAjax(base.options.dataUrls.host+base.options.dataUrls.getEvents, "GET", null, fOnSuccessCallback, fOnErrorCallback);
                 },
                 eventColor: '#32c5d2'
             });
@@ -354,37 +392,50 @@
         base.init();
     };
     $.Dwec.Calendar.defaultOptions = {
-        // TODO cambiar nombres urls
-        html: true,
+        estructureWrapersCalendar:"<div class='portlet light portlet-fit bordered calendar'><div class='portlet-title'><div class='caption'><i class='icon-layers font-green'></i><span class='caption-subject font-green sbold uppercase'>Calendar</span></div></div><div class='portlet-body'><div class='row'><div class='col-md-3 col-sm-12'><h3 class='event-form-title margin-bottom-20'>Draggable Events</h3><div class='external-events'><hr/><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='calendar1' class='has-toolbar'></div></div></div></div></div>",
+        messages: {
+            editEvent:{
+                error:"",
+                success:"",
+                errorResize:"Failed to change the end date of the event",
+                successResize:"Changed the end date of the event",
+                errorDrop:"Failed to change event day",
+                successDrop:"Day event changed",
+                modalDrop:"Do you want to change from day event?",
+                modalResize:"Do you want to change the date of expiration of the event?"
+            },
+            getEvents:{
+                error:"Failed to connect to server",
+                success:"All events available loaded successfully"
+            },
+            addEvents:{
+                error:"Error adding new event",
+                success:"New event added"
+            },
+            delEvents:{
+                error:"Failed to delete event",
+                success:"Event deleted",
+                modal:"Do you want to remove this event ?"
+            }
+
+        },
         dataFilters:{
             model:"generic",
             shown:"session,microcicle"
         },
-
+        dataUrls:{
+            host:"http://tomcat7-mycoachgate.rhcloud.com/rest/events/",
+            editEvent:"set/",
+            getEvents:"get/",
+            addEvents:"add/",
+            delEvents:"clear/"
+        }
+        /*
+        html: true,
         urlEdit: "http://tomcat7-mycoachgate.rhcloud.com/rest/events/set/",
         urlGet: "http://tomcat7-mycoachgate.rhcloud.com/rest/events/get/",
         urlAdd: "http://tomcat7-mycoachgate.rhcloud.com/rest/events/add/",
-        urlDel: "http://tomcat7-mycoachgate.rhcloud.com/rest/events/clear/",
-        onDropEventType: "",
-        urlEventsTypes: "http://tomcat7-mycoachgate.rhcloud.com/rest/eventGroup/get/",
-        post: "",
-        msgError: "Content not found",
-        eventsJson: {},
-        connectionFail: function connectionFail() {
-            toastr.error("Ups!", "No podemos conectar...");
-        },
-        editOnSuccess: function editOnSuccess() {
-        },
-        editOnFail: function editOnFail() {
-        },
-        addOnSuccess: function addOnSuccess() {
-        },
-        addOnFail: function addOnFail() {
-        },
-        deleteOnSuccess: function deleteOnSuccess() {
-        },
-        deleteOnFail: function deleteOnFail() {
-        }
+        urlDel: "http://tomcat7-mycoachgate.rhcloud.com/rest/events/clear/"*/
     };
     $.fn.Dwec_Calendar = function (getData, options) {
         return this.each(function () {
