@@ -1,3 +1,7 @@
+/**
+ * CRUD plugin
+ * @author: alejandro
+ */
 (function ($) {
     if (!$.Dwec) {
         $.Dwec = {};
@@ -13,6 +17,8 @@
         base.el = el;
         base.actionsArray = [];
         base.fieldsArray = [];
+        base.eventTypes = {};
+        base.eventStatus = {};
         base.dataTable = {};
         base.table = null;
         // Add a reverse reference to the DOM object
@@ -28,6 +34,8 @@
                     base.renderExternalButton(); //I need to execute it here, because actions array is empty
                     base.renderTable();
                 });
+                base.setEventTypes();
+                base.setEventStatus();
             } catch (e) {
                 console.log("Something goes wrong in the init" + e);
             }
@@ -62,10 +70,7 @@
             //SEND buttons events
             base.$el.on('click', 'button[data-action = "SEND"]', function () {
                 try {
-                    window.open(
-                        $(this).data("uri"),
-                        '_blank'
-                    );
+                    window.open($(this).data("uri"), '_blank');
                 } catch (e) {
                     console.log(e);
                 }
@@ -78,21 +83,53 @@
             });
         };
 
+        /**
+         * Makes a ajax request to load the event status, only needed to adapt the form
+         */
+        base.setEventStatus = function () {
+            base.doProcessRequest(base.options.eventStatusUri, "GET", {}, function (data) {
+                base.eventStatus = data;
+            })
+        };
+
+        /**
+         * Makes a ajax request to load the event type, only needed to adapt the form
+         */
+        base.setEventTypes = function () {
+            base.doProcessRequest(base.options.eventTypeUri, "GET", {}, function (data) {
+                base.eventTypes = data;
+            })
+        };
+
+        /**
+         * Looks for a key in an object by a given value
+         * @param val
+         * @param o
+         * @returns {string}
+         */
+        base.getKey = function (val, o) {
+            var key = "";
+            $.each(o, function (k, v) {
+                if (v == val.trim()) {
+                    key = k;
+                }
+            });
+
+            return key;
+        };
+
         //CRUD Methods
         /**
          * Creates a form instance into the formWrapper div and makes the new object to insert it on the api
+         * @param uri
          */
         base.doAdd = function (uri) {
-            var o = {};
             try {
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), {groupId: 32}, {
-                    structure: base.options.actions, onSaveFunction: function (data) {
-                        for (var i = 0; i < base.fieldsArray.length; i++) {
-                            //TODO: Apply the filters to construct a correct object, important for the matrioska of events
-                            o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
-                        }
-                        console.log(JSON.stringify(o));
-                        base.doProcessRequest(uri, "POST", o, function () {
+                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                    formData: {eventGroup: base.options.eventGroup},
+                    structure: base.options.actions,
+                    onSaveFunction: function (data) {
+                        base.doProcessRequest(uri, "POST", base.doGenerateFormattedObject(data), function () {
                             toastr.success("Element correctly added");
                             base.dataTable.ajax.reload(null, false);
                         })
@@ -100,19 +137,41 @@
                 });
             }
             catch (e) {
+                console.log("Error adding the form");
             }
         };
 
+        /**
+         * TODO: Find a way to send to the form data that can be read it. This will be useful for update and show
+         * @param o
+         * @param uri
+         */
         base.doUpdate = function (o, uri) {
-            try {
-                //TODO update action
                 var newObject = {};
                 new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
                     formData: JSON.parse(o),
                     structure: base.options.actions,
                     onSaveFunction: function (data) {
                         for (var i = 0; i < base.fieldsArray.length; i++) {
-                            //TODO: refator once is corrected
+                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
+                        }
+                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
+                            toastr.success("Element correctly edited");
+                            base.dataTable.ajax.reload(null, false);
+                        })
+                    }
+                });
+        };
+
+        base.doShow = function (o) {
+            try {
+                var newObject = {};
+                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                    formData: JSON.parse(o),
+                    structure: base.options.actions,
+                    hiddenButtons: true,
+                    onSaveFunction: function (data) {
+                        for (var i = 0; i < base.fieldsArray.length; i++) {
                             newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
                         }
                         base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
@@ -127,12 +186,11 @@
             }
         };
 
-        base.doShow = function (o) {
-            //TODO show action
-            toastr.warning("SHOW NOT IMPLEMENTED YET!!!!");
-            console.log(o);
-        };
-
+        /**
+         * Deletes the selected item of the table
+         * @param uri
+         * @param o
+         */
         base.doDelete = function (uri, o) {
             base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
                 toastr.success("This element has been correctly removed", "Deleting");
@@ -144,6 +202,28 @@
                     console.log(e);
                 }
             });
+        };
+
+        /**
+         * Generates a correct event or event group object using the data of the form.
+         * @param data
+         * @returns {{}}
+         */
+        base.doGenerateFormattedObject = function(data){
+            var o = {};
+            for (var i = 0; i < base.fieldsArray.length; i++) {
+                if (base.fieldsArray[i].type == 'json')// at the moment without && == null
+                    o[base.fieldsArray[i].name] = JSON.parse('{"data":[]}');
+                else if (base.fieldsArray[i].type == 'optionList') {
+                    if (base.fieldsArray[i].name == 'eventType')
+                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventTypes);
+                    else
+                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventStatus);
+                }
+                else
+                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: base.options.eventGroup} : data[base.fieldsArray[i].name];
+            }
+            return o;
         };
 
         //AJAX
@@ -178,11 +258,7 @@
         base.getHttpStatusFromOptions = function (o) {
             var statusObject = {};
             $.each(o, function (k, v) {
-                statusObject[k] = (k.indexOf('2') == 0) ? function () {
-                    toastr.success(v);
-                } : function () {
-                    toastr.error(v);
-                }
+                statusObject[k] = (k.indexOf('2') == 0) ? function () { toastr.success(v);} : function () { toastr.error(v);}
             });
 
             return statusObject;
@@ -429,7 +505,10 @@
             405: "Method Not Allowed",
             415: "Unsupported Media Type",
             500: "Internal Server Error"
-        }
+        },
+        eventGroup: 32,
+        eventTypeUri:"getEventTypes",
+        eventStatusUri:"getEventStatus"
     };
 
     /**
@@ -458,4 +537,3 @@
     };
 })
 (jQuery);
-//TODO:put a option of the group at the moment to add, update/add matrioskas
