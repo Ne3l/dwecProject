@@ -49,22 +49,38 @@
 
             //Button add on the element
             base.$el.find("[data-action = 'add']").click(function () {
-                base.doAdd($(this).data("uri"));
+                try {
+                    base.doAdd($(this).data("uri"));
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //Edit action, this will open a form
             base.table.on('click', 'span[data-action = "set"]', function () {
-                base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
+                try {
+                    base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //Show action, this will open a form
             base.table.on('click', 'span[data-action = "find"]', function () {
-                base.doShow($(this).siblings("input").val());
+                try {
+                    base.doShow($(this).siblings("input").val());
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //This directly deletes directly the
             base.table.on('click', 'span[data-action = "clear"]', function () {
-                base.doDelete($(this).data("uri"), $(this).siblings("input").val());
+                try {
+                    base.doDelete($(this).data("uri"), $(this).siblings("input").val());
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //SEND buttons events
@@ -83,6 +99,67 @@
             });
         };
 
+        //CRUD Methods
+        /**
+         * Creates a form instance into the formWrapper div and makes the new object to insert it on the api
+         * @param uri
+         */
+        base.doAdd = function (uri) {
+            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                formData: {eventGroup: base.options.eventGroup},
+                structure: base.options.actions,
+                onSaveFunction: function (data) {
+                    base.doProcessRequest(uri, "POST", base.doGenerateFormattedObject(data), function () {
+                        toastr.success("Element correctly added");
+                        base.dataTable.ajax.reload(null, false);
+                    })
+                }
+            });
+        };
+
+        /**
+         * @param o
+         * @param uri
+         */
+        base.doUpdate = function (o, uri) {
+            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                formData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                structure: base.options.actions,
+                onSaveFunction: function (data) {
+                    base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", base.doGenerateFormattedObject(data), function () {
+                        toastr.success("Element correctly edited");
+                        base.dataTable.ajax.reload(null, false);
+                    })
+                }
+            });
+        };
+
+        /**
+         * Shows the form without the action buttons, just to see the information
+         * @param o
+         */
+        base.doShow = function (o) {
+            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                formData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                structure: base.options.actions,
+                hiddenButtons: true
+            });
+        };
+
+        /**
+         * Deletes the selected item of the table
+         * @param uri
+         * @param o
+         */
+        base.doDelete = function (uri, o) {
+            base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
+                toastr.success("This element has been correctly removed", "Deleting");
+                base.dataTable.ajax.reload(null, false);
+                base.dataTable.clear(); //Need this in case of removing last element
+            });
+        };
+
+        //HELPER FUNCTIONS
         /**
          * Makes a ajax request to load the event status, only needed to adapt the form
          */
@@ -117,103 +194,25 @@
 
             return key;
         };
-
-        //CRUD Methods
         /**
-         * Creates a form instance into the formWrapper div and makes the new object to insert it on the api
-         * @param uri
-         */
-        base.doAdd = function (uri) {
-            try {
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: {eventGroup: base.options.eventGroup},
-                    structure: base.options.actions,
-                    onSaveFunction: function (data) {
-                        base.doProcessRequest(uri, "POST", base.doGenerateFormattedObject(data), function () {
-                            toastr.success("Element correctly added");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
-            }
-            catch (e) {
-                console.log("Error adding the form");
-            }
-        };
-
-        /**
-         * TODO: Find a way to send to the form data that can be read it. This will be useful for update and show
-         * @param o
-         * @param uri
-         */
-        base.doUpdate = function (o, uri) {
-                var newObject = {};
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: JSON.parse(o),
-                    structure: base.options.actions,
-                    onSaveFunction: function (data) {
-                        for (var i = 0; i < base.fieldsArray.length; i++) {
-                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
-                        }
-                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
-                            toastr.success("Element correctly edited");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
-        };
-
-        base.doShow = function (o) {
-            try {
-                var newObject = {};
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: JSON.parse(o),
-                    structure: base.options.actions,
-                    hiddenButtons: true,
-                    onSaveFunction: function (data) {
-                        for (var i = 0; i < base.fieldsArray.length; i++) {
-                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
-                        }
-                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
-                            toastr.success("Element correctly edited");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
-            }
-            catch (e) {
-
-            }
-        };
-
-        /**
-         * Deletes the selected item of the table
-         * @param uri
-         * @param o
-         */
-        base.doDelete = function (uri, o) {
-            base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
-                toastr.success("This element has been correctly removed", "Deleting");
-                try {
-                    base.dataTable.ajax.reload(null, false);
-                    base.dataTable.clear(); //Need this in case of removing last element
-                }
-                catch (e) {
-                    console.log(e);
-                }
-            });
-        };
-
-        /**
+         * TODO: Try to allow updates of configuration
          * Generates a correct event or event group object using the data of the form.
          * @param data
          * @returns {{}}
          */
-        base.doGenerateFormattedObject = function(data){
+        base.doGenerateFormattedObject = function (data) {
             var o = {};
             for (var i = 0; i < base.fieldsArray.length; i++) {
-                if (base.fieldsArray[i].type == 'json')// at the moment without && == null
-                    o[base.fieldsArray[i].name] = JSON.parse('{"data":[]}');
+                if (base.fieldsArray[i].type == 'json') {
+                    try {
+                        if (base.fieldsArray[i].name == 'configuration' || data[base.fieldsArray[i].name] == null)
+                            o[base.fieldsArray[i].name] = JSON.parse('{"data":[]}');
+                        else
+                            o[base.fieldsArray[i].name] = JSON.parse(data[base.fieldsArray[i].name]);
+                    } catch (e) {
+                        console.log(e);
+                    }
+                }
                 else if (base.fieldsArray[i].type == 'optionList') {
                     if (base.fieldsArray[i].name == 'eventType')
                         o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventTypes);
@@ -223,6 +222,27 @@
                 else
                     o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: base.options.eventGroup} : data[base.fieldsArray[i].name];
             }
+            return o;
+        };
+
+        /**
+         * By a given object generates an object that can be processed by a form to display the date in case of show or update action
+         * @param data
+         * @returns {{}}
+         */
+        base.doGenerateFormProcessableObject = function (data) {
+            var o = {};
+            for (var i = 0; i < base.fieldsArray.length; i++) {
+                if (base.fieldsArray[i].type == 'json')
+                    o[base.fieldsArray[i].name] = JSON.stringify(data[base.fieldsArray[i].name]);
+                else if (base.fieldsArray[i].type == 'optionList')
+                    o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name].itemLabel;
+                else if (base.fieldsArray[i].type == 'date')
+                    o[base.fieldsArray[i].name] = moment(data[base.fieldsArray[i].name]).format("YYYY-MM-DD");
+                else
+                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? data[base.fieldsArray[i].name].id : data[base.fieldsArray[i].name];
+            }
+
             return o;
         };
 
@@ -258,7 +278,11 @@
         base.getHttpStatusFromOptions = function (o) {
             var statusObject = {};
             $.each(o, function (k, v) {
-                statusObject[k] = (k.indexOf('2') == 0) ? function () { toastr.success(v);} : function () { toastr.error(v);}
+                statusObject[k] = (k.indexOf('2') == 0) ? function () {
+                    toastr.success(v);
+                } : function () {
+                    toastr.error(v);
+                }
             });
 
             return statusObject;
@@ -507,8 +531,8 @@
             500: "Internal Server Error"
         },
         eventGroup: 32,
-        eventTypeUri:"getEventTypes",
-        eventStatusUri:"getEventStatus"
+        eventTypeUri: "getEventTypes",
+        eventStatusUri: "getEventStatus"
     };
 
     /**
