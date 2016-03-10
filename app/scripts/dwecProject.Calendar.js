@@ -26,10 +26,10 @@
       base.$el.css("margin-bottom", "7em");
       base.$eventBox = base.$el.find('.event_box');
       base.$calendar = base.$el.find('.calendar1');
-      //if(document.getElementById('calendarModal') == null){
-      //  $("body").append("<div id='calendarModal' class='modal fade' tabindex='-1' role='dialog'> <div class='modal-dialog'> <div class='modal-content'> <div class='modal-header'> <button type='button' class='close' data-dismiss='modal' aria-label='Closev><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title'>Information</h4> </div> <div class='modal-body'> <p id='content'></p> </div> <div class='modal-footer'> <button id='close' type='button' class='btn btn-default' data-dismiss='modal'>Close</button> <button type='button' id='accept' class='btn btn-primary' data-dismiss='modal'>Save changes</button> </div> </div></div></div>");
-      //  base.$calendarModal = $('#calendarModal');
-      //}
+      if(document.getElementById('calendarModal') == null){
+        $("body").append("<div id='calendarModal' class='modal fade' tabindex='-1' role='dialog'> <div class='modal-dialog'> <div class='modal-content'> <div class='modal-header'> <button type='button' class='close' data-dismiss='modal' aria-label='Closev><span aria-hidden='true'>&times;</span></button> <h4 class='modal-title'>Information</h4> </div> <div class='modal-body'> <p id='content'></p> </div> <div class='modal-footer'> <button id='close' type='button' class='btn btn-default' data-dismiss='modal'>Close</button> <button type='button' id='accept' class='btn btn-primary' data-dismiss='modal'>Save changes</button> </div> </div></div></div>");
+        base.$calendarModal = $('#calendarModal');
+      }
 
 
       base.renderBin();
@@ -156,7 +156,7 @@
                 start: fechaStart,
                 end: fechaEnd, //"2016-02-03T12:01:00"
                 color: color,
-                allDay: base.allDay(fechaStart, fechaEnd)  //todo allDay
+                allDay: base.allDay(fechaStart, fechaEnd)
               };
               base.$calendar.fullCalendar('renderEvent', myEvent);
               // toastr.success("Evento añadido", "Evento dia " + myEvent.start);
@@ -266,7 +266,7 @@
         "startDate": event.start,
         "endDate": event.end,
         "eventType": "SESSION",
-        allDay: base.allDay(moment(event.start).format(), moment(event.end).format())//todo allDay
+        allDay: base.allDay(moment(event.start).format(), moment(event.end).format())
       };
 
       var fOnSuccessCallback = function fOnSuccessCallback(id) {
@@ -333,26 +333,39 @@
         eventDragStop: function eventDragStop(event, jsEvent, ui, view) {
           console.log("X -> " + jsEvent.clientX);
           console.log("Y -> " + jsEvent.clientY);
+
+
+
+
           if (base.isEventOverDiv(jsEvent.clientX, jsEvent.clientY)) {
-            //base.$calendarModal.find("#modal-title").text(event.title);
-            //base.$calendarModal.find("#content").text(base.options.messages.delEvents.modal);
-            //
-            //base.$calendarModal.find("#accept").on("click", function () {
+            base.$calendar.find("#"+event.id).hide();
+            base.$calendarModal.find("#modal-title").text(event.title);
+            base.$calendarModal.find("#content").text(base.options.messages.delEvents.modal);
 
-            var fOnSuccessCallback = function (id) {
-              base.$calendar.fullCalendar('removeEvents', event._id);
-              toastr.success(event.title, base.options.messages.delEvents.success);
-            };
-            var fOnErrorCallback = function () {
-              toastr.error(event.title, base.options.messages.delEvents.error);
-            };
+            //reset onClick function
+            base.$calendarModal.find("#accept").unbind("click");
+            base.$calendarModal.find("#close").unbind("click");
 
-            base.doAjax(base.options.dataUrls.host+base.options.dataUrls.delEvents + event._id, 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
-            //});
+            base.$calendarModal.find("#close").on("click", function () {
+              base.$calendar.find("#"+event.id).show()
+            });
 
-            //base.$calendarModal.modal('show');
+            base.$calendarModal.find("#accept").on("click", function () {
+
+              var fOnSuccessCallback = function (id) {
+                base.$calendar.fullCalendar('removeEvents', event._id);
+                toastr.success(event.title, base.options.messages.delEvents.success);
+              };
+              var fOnErrorCallback = function () {
+                toastr.error(event.title, base.options.messages.delEvents.error);
+              };
+
+              base.doAjax(base.options.dataUrls.host+base.options.dataUrls.delEvents + event._id, 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
+            });
+            base.$calendarModal.modal('show');
           }
         },
+        dragRevertDuration: 0,
         events: function events(start, end, timezone, callback) {
           var fOnSuccessCallback = function fOnSuccessCallback(doc) {
             var events = [];
@@ -375,7 +388,7 @@
                     title: doc[item]['name'],
                     start: doc[item]['startDate'],
                     end: doc[item]['endDate'],
-                    allDay: base.allDay(doc[item]['startDate'], doc[item]['endDate']) //todo allDay
+                    allDay: base.allDay(doc[item]['startDate'], doc[item]['endDate'])
                   });
 
                 }
@@ -391,7 +404,10 @@
 
           base.doAjax(base.options.dataUrls.host+base.options.dataUrls.getEvents, "GET", null, fOnSuccessCallback, fOnErrorCallback);
         },
-        eventColor: '#32c5d2'
+        eventColor: '#32c5d2',
+        eventRender: function (event, element){
+          element.attr("id", event.id);
+        }
       });
     };
 
