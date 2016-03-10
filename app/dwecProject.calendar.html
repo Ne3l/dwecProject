@@ -12,7 +12,8 @@
   <title>DwecProject | Blank Page</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta content="width=device-width, initial-scale=1" name="viewport"/>
-  <meta content="" name="description"/>
+  <meta content="" name="d
+  escription"/>
   <meta content="" name="author"/>
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet"
         type="text/css"/>
@@ -25,15 +26,11 @@
         type="text/css"/>
   <link href="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css"
         rel="stylesheet" type="text/css"/>
-  <!-- Specific components-->
-  <link href="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-toastr/toastr.min.css" rel="stylesheet" type="text/css"/>
-  <link href="http://www.albertosoto.es/learn/dwec-prj/global/plugins/fullcalendar/fullcalendar.min.css" rel="stylesheet" type="text/css"/>
-  <!-- End specific -->
   <link href="http://www.albertosoto.es/learn/dwec-prj/global/css/css-global.css" rel="stylesheet" type="text/css"/>
-  <link href="http://www.albertosoto.es/learn/dwec-prj/global/layout/css/css-all.css" rel="stylesheet"
-        type="text/css"/>
-  <link href="http://cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.6.0/fullcalendar.min.css" rel="stylesheet"
-        type="text/css"/>
+  <link href="http://www.albertosoto.es/learn/dwec-prj/global/layout/css/css-all.css" rel="stylesheet" type="text/css"/>
+  <link href="https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css"/>
+  <link href="/bower_components/toastr/toastr.css" rel="stylesheet" type="text/css"/>
+  <link href="css/dwecProject.Form.css" rel="stylesheet" type="text/css"/>
 </head>
 <!-- END HEAD -->
 
@@ -58,7 +55,7 @@
         <ul class="page-breadcrumb">
           <li>
             <i class="icon-home"></i>
-            <a href="index.html">Home</a>
+            <a href="index0.html">Home</a>
             <i class="fa fa-angle-right"></i>
           </li>
           <li>
@@ -94,70 +91,159 @@
         </div>
       </div>
       <!-- END PAGE HEADER-->
-      <!-- BEGIN PAGE BASE CONTENT -->
-
-      <div class='portlet light portlet-fit bordered calendar'>
-        <div class='portlet-title'>
-          <div class='caption'>
-            <i class='icon-layers font-green'></i>
-            <span class='caption-subject font-green sbold uppercase'>Calendar</span>
-          </div>
-        </div>
-        <div class='portlet-body'>
-          <div id="plugin1" class='row'></div>
-          <div id="plugin2" class='row'></div>
-        </div>
-        <!-- END PAGE BASE CONTENT -->
+      <div class="note note-info">
+        <button type="button" class="btn btn-default" id="FormButton">
+          <span class="glyphicon glyphicon-plus-sign"></span>
+          Modal Example
+        </button>
+        <button type="button" class="btn btn-default" id="FormButton2">
+          <span class="glyphicon glyphicon-plus-sign"></span>
+          Container Left Example
+        </button>
+        <button type="button" class="btn btn-default" id="FormButton3">
+          <span class="glyphicon glyphicon-plus-sign"></span>
+          Container Right Example
+        </button>
       </div>
-      <!-- END CONTENT BODY -->
+      <div class="row">
+        <div class="col-xs-6 leftCont"></div>
+        <div class="col-xs-6 rightCont"></div>
+      </div>
+      <div id="crudForm"></div>
     </div>
-    <!-- END CONTENT -->
+    <!-- END CONTENT BODY -->
   </div>
-  <!-- END CONTAINER -->
-  <!-- BEGIN FOOTER -->
-  <div class="page-footer">
-    <div class="page-footer-inner"> 2015 &copy; by asoto.
-    </div>
-    <div class="scroll-to-top">
-      <i class="icon-arrow-up"></i>
-    </div>
+  <!-- END CONTENT -->
+</div>
+<!-- END CONTAINER -->
+<!-- BEGIN FOOTER -->
+<div class="page-footer">
+  <div class="page-footer-inner"> 2015 &copy; by asoto.
   </div>
-  <!-- END FOOTER -->
-  <!--[if lt IE 9]>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/respond.min.js"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/excanvas.min.js"></script>
-  <![endif]-->
-  <!-- BEGIN CORE PLUGINS -->
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery.min.js" type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap/js/bootstrap.min.js"
-          type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/js.cookie.min.js" type="text/javascript"></script>
-  <script
-    src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js"
-    type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js"
-          type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery.blockui.min.js"
-          type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/uniform/jquery.uniform.min.js"
-          type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js"
-          type="text/javascript"></script>
-  <!-- END CORE PLUGINS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.6.0/fullcalendar.min.js"
-          type="text/javascript"></script>
-  <!-- BEGIN THEME GLOBAL SCRIPTS -->
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/scripts/app.min.js" type="text/javascript"></script>
-  <script src="http://www.albertosoto.es/learn/dwec-prj/global/layout/layout-utils.js" type="text/javascript"></script>
-  <!-- END THEME LAYOUT SCRIPTS -->
-  <script src="scripts/Dwec.Calendar.js" type="text/javascript"></script>
-  <script type="text/javascript">
-    $(document).ready(function () {
-      $('#plugin1').Dwec_Calendar(null, {});
-      $('#plugin2').Dwec_Calendar(null, {});
-    });
-  </script>
+  <div class="scroll-to-top">
+    <i class="icon-arrow-up"></i>
+  </div>
+</div>
+<!-- END FOOTER -->
+<!--[if lt IE 9]>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/respond.min.js"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/excanvas.min.js"></script>
+<![endif]-->
+<!-- BEGIN CORE PLUGINS -->
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery.min.js" type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap/js/bootstrap.min.js"
+        type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/js.cookie.min.js" type="text/javascript"></script>
+<script
+  src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-hover-dropdown/bootstrap-hover-dropdown.min.js"
+  type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js"
+        type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/jquery.blockui.min.js"
+        type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/uniform/jquery.uniform.min.js"
+        type="text/javascript"></script>
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js"
+        type="text/javascript"></script>
+<script src="/bower_components/toastr/toastr.min.js" type="text/javascript"></script>
+<!-- END CORE PLUGINS -->
+<script src="/bower_components/toastr/toastr.min.js" type="text/javascript"></script>
+<!-- BEGIN THEME GLOBAL SCRIPTS -->
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/scripts/app.min.js" type="text/javascript"></script>
+<!-- END THEME GLOBAL SCRIPTS -->
+<!-- BEGIN THEME LAYOUT SCRIPTS -->
+<script src="http://www.albertosoto.es/learn/dwec-prj/global/layout/layout-utils.js" type="text/javascript"></script>
+<!-- END THEME LAYOUT SCRIPTS -->
+<script src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js" type="text/javascript"></script>
+<script src="scripts/dwecProject.Form.js"></script>
+<script src="scripts/test.js"></script>
 </body>
+
 </html>
+<script>
+
+  /*
+
+   Options:---------------------------------------------------------------------------------------------
+
+   * WrapperType: 'container' | 'modal'  -> Display mode of the Form.
+   * extraData: obj                      -> Extra Data to fill the inputs.
+   * wrapperTitle: String                -> Title of the Form.
+   * toastAdvice: true | false           -> Displays Error Toast on validation.
+   * fieldRedAdvice:  true | false       -> Becomes fields to read on bad validation.
+   * buttonHidden:   true | false        -> Hide bottom buttons. (true hidden).
+   * onSaveFunction: function            -> CallBack function to interact with the result object.
+   * readOnly: true | false              -> If it's true, inputs won't be editable.
+
+   Considerations:--------------------------------------------------------------------------------------
+
+   - All values could be null, and then be completed in the Form.
+   - In case a field was hidden, you should know that the user won't be able to complete it,
+   so it should have a value SET, unless it's no-required.
+
+   */
+
+  //Example of an Object to pass to the plugin with the EventStructure of the Rest.
+  //If you want that one user only have to write some fields, you can pass an object to the plugin with the filled fields.
+  var obj = {
+    id: "5",
+    name: "Event Test",
+    description: "<p>Working</p>",
+    startDate: "2015-05-05",
+    endDate: null,
+    eventGroup: 'one',
+    content: null,
+    configuration: null,
+    eventType: 'session',
+    status: null
+  };
+
+  //That's an example of a CallBack function which will interact when the results when the form finishes.
+  var func = function (data) {
+    console.log(data);
+    toastr.success("Element added successfuly");
+  };
+
+  //Example 1
+  $('#FormButton').on('click', function () {
+    //new jQuery.Plugin.Form(jQuery("#CrudForm"), null, {formData:obj,onSaveFunction:func}); //rendered in modal
+    //new jQuery.DwecProject.Form(jQuery(".note-info"), null, {extraData:obj,wrapperType:'container'}); //rendered in modal
+    new jQuery.DwecProject.Form(jQuery("#crudForm"), null, {
+      wrapperType: 'modal',
+      wrapperTitle: "Modal Example",
+      onSaveFunction: func,
+      extraData: obj,
+      toastAdvice: true,
+      fieldRedAdvice: true,
+      buttonHidden: true,
+      readOnly: true
+    });
+  });
+  //Example 2
+  $('#FormButton2').on('click', function () {
+    //new jQuery.Plugin.Form(jQuery(".note-info"), null, {display: 'modal', hiddenButtons: true}); //rendered in container
+    new jQuery.DwecProject.Form(jQuery(".leftCont"), null, {
+      wrapperType: 'container',
+      wrapperTitle: "Form Left",
+      onSaveFunction: func,
+      extraData: obj,
+      toastAdvice: true,
+      fieldRedAdvice: true,
+      buttonHidden: false,
+      readOnly:false
+    });
+  });
+  $('#FormButton3').on('click', function () {
+    //new jQuery.Plugin.Form(jQuery(".note-info"), null, {display: 'modal', hiddenButtons: true}); //rendered in container
+    new jQuery.DwecProject.Form(jQuery(".rightCont"), null, {
+      wrapperType: 'container',
+      wrapperTitle: "Form Right",
+      onSaveFunction: func,
+      extraData: obj,
+      toastAdvice: true,
+      fieldRedAdvice: true,
+      buttonHidden: false,
+      readOnly:false
+    });
+  });
+</script>
