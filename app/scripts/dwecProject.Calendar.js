@@ -22,8 +22,8 @@
     base.init = function () {
       base.getData = getData;
       base.options = $.extend({}, $.Dwec.Calendar.defaultOptions, options);
-      base.$el.append(base.options.estructureWrapersCalendar);
-base.$el.css("margin-bottom", "7em");
+      base.$el.append(base.options.estructureWrapersCalendar.replace("{externalEventsTitle}", base.options.externalEventsTitle));
+      base.$el.css("margin-bottom", "7em");
       base.$eventBox = base.$el.find('.event_box');
       base.$calendar = base.$el.find('.calendar1');
       //if(document.getElementById('calendarModal') == null){
@@ -401,7 +401,8 @@ base.$el.css("margin-bottom", "7em");
     language:"es",
     nameButtonAdd:"Add Event",
     allDay: 5,
-    estructureWrapersCalendar:"<div class='col-md-3 col-sm-12'><h3 class='event-form-title margin-bottom-20'>Draggable Events</h3><div class='external-events'><hr/><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='calendar1' class='has-toolbar'></div></div></div>",
+    externalEventsTitle:"Dragable Events",
+    estructureWrapersCalendar:"<div class='col-md-3 col-sm-12'><h3 class='event-form-title margin-bottom-20'>{externalEventsTitle}</h3><div class='external-events'><hr/><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='calendar1' class='has-toolbar'></div></div></div>",
     messages: {
       editEvent:{
         error:"",
