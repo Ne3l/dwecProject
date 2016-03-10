@@ -85,6 +85,21 @@
   margin-left:2px;
   margin-right:5px;
 }
+.badFieldLabel{
+  display: inline-block;
+  height: 34px;
+  border: 1px solid #c2cad8;
+  background-color: #CD0000;
+  vertical-align: top;
+  width:125px;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  color: white;
+  padding-left: 10px;
+  padding-top: 5px;
+  margin-left:2px;
+  margin-right:5px;
+}
 .input-right{
   max-width:55%;
   display: inline-block;
@@ -92,11 +107,28 @@
 input.input-right:hover{
   background-color:#E0EEEE;
 }
-textarea.input-right:hover{
+.textareaStyle:hover{
   background-color:#E0EEEE;
 }
-textarea{
+.textareaStyle{
   border-top-right-radius: 60px;
   border-bottom-right-radius: 60px;
   border-bottom-left-radius: 60px;
 }
+.formButton{
+  margin-top:15px;
+  margin-left:5px;
+  margin-right:5px;
+}
+.contTitle{
+  margin-bottom: 10px;
+  padding-top:7px;
+  padding-left:10px;
+  border-radius:25px;
+  border: 1px solid #c2cad8;
+  background-color:cornflowerblue;
+  color:white;
+  width:250px;
+
+}
+
