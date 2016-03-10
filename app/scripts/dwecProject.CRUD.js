@@ -220,7 +220,7 @@
                         o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventStatus);
                 }
                 else
-                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: base.options.eventGroup} : data[base.fieldsArray[i].name];
+                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: data[base.fieldsArray[i].name]} : data[base.fieldsArray[i].name];
             }
             return o;
         };
