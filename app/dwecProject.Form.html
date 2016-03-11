@@ -204,8 +204,9 @@
     toastr.success("Element added successfuly");
   };
   //That's an example of a CallBack function which will be called after rendering the html in the DOM. 
-  var func2 = function(){
-    console.log("Render Finished")
+  var func2 = function(data){
+    console.log("Render Finished");
+    console.log(data);
   };
 
   //Example 1
