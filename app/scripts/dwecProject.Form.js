@@ -1,7 +1,3 @@
-/**
- * Form Plugin v2.0.
- * Plugin done by Borja Benejam.
- */
 (function ($) {
   if (!$.DwecProject) {
     $.DwecProject = new Object();
@@ -88,7 +84,7 @@
       //AddListeners to Form.
       base.addListeners();
       //Optional function to do when render finishes.
-      base.options.onFinishRender(data);
+      base.options.onFinishRender();
     };
     base.addListeners = function () {
       //set Listeners of Buttons
@@ -172,7 +168,12 @@
             errorObject[(obj['name'])] = obj['name'];
             goodObject[obj['name']] = null;
           } else {
-            goodObject[obj['name']] = input.text().trim();
+            var uriDataValue = input.text().trim();
+            $.each(obj['uriData'],function(key,value){
+              if(value == uriDataValue){
+                goodObject[obj['name']] = key;
+              }
+            });
           }
         }
       });
@@ -184,7 +185,6 @@
         if (base.options.validation.toastAdvice) base.options.toastError.createError(errorObject, "Some fields are not OK:");
       }
     };
-    
     base.deletePlugin = function () {
       //Removes Form to the DOM.
       $('#' + base.id).remove();
@@ -198,7 +198,7 @@
         if (typeof(types[type]) == 'string') {
           return base.options.htmlRender.input(types[type], obj['name'], base.options.getReadOnly());
         } else {
-        //If we have specified one functionality, it's a function. So here it will be called.  
+        //If we have specified one functionality, it's a function. So here it will be called.
           return types[type](obj, base);
         }
         //If the type value isn't recognized there will appear a Toast R.
@@ -327,7 +327,7 @@
       }
     ],
     /**
-      - Best improvement of Form 2.0, Form can receive any type of data, in the following option you can add
+      - Best improve of Form 2.0, Form can receive any type of data, in the following option you can add
         a functionality for each one. If it has a string value, it means that it's a common HTML5 input type.
 
       - Another use: I received a Type STRING from rest service, and here I can do that each string type
@@ -348,12 +348,12 @@
       'hidden': 'hidden',
       'month': 'month',
       'number': 'number',
+      //TODO devolver KEY.
       'optionList': function (obj, base) {
         //Rendering of Dropdown Button
         var input = "";
         $.each(obj['uriData'], function (key2) {
-          input += base.options.htmlRender.dropDownElement.format({itemName: key2});
-          //input += base.options.htmlRender.dropDownElement.format({itemName: obj['uriData'][key2]});
+          input += base.options.htmlRender.dropDownElement.format({itemName: obj['uriData'][key2]});
         });
         input = base.options.htmlRender.dropDownButton(obj['name'], obj['label'],input );
         return input;
@@ -442,7 +442,7 @@
       toastr.success("Element added successfuly");
     },
     onFinishRender:function(data){
-      console.log(data);
+
     }
   };
   $.fn.DwecProject_Form = function (getData, options) {
@@ -456,4 +456,3 @@
     this.data("DwecProject.Form");
   };
 })(jQuery);
-
