@@ -88,7 +88,7 @@
       //AddListeners to Form.
       base.addListeners();
       //Optional function to do when render finishes.
-      base.options.onFinishRender();
+      base.options.onFinishRender(data);
     };
     base.addListeners = function () {
       //set Listeners of Buttons
@@ -440,8 +440,8 @@
     onSaveFunction: function (data) {
       toastr.success("Element added successfuly");
     },
-    onFinishRender:function(){
-
+    onFinishRender:function(data){
+      console.log(data);
     }
   };
   $.fn.DwecProject_Form = function (getData, options) {
