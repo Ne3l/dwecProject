@@ -162,21 +162,22 @@
 <script>
 
   /*
-
+   Form Plugin by Borja
    Options:---------------------------------------------------------------------------------------------
 
    * WrapperType: 'container' | 'modal'  -> Display mode of the Form.
    * extraData: obj                      -> Extra Data to fill the inputs.
    * wrapperTitle: String                -> Title of the Form.
-   * toastAdvice: true | false           -> Displays Error Toast on validation.
-   * fieldRedAdvice:  true | false       -> Becomes fields to read on bad validation.
+   * toastAdvice: true | false           -> Displays Toast Error on bad validation.
+   * fieldRedAdvice:  true | false       -> Becomes fields to red on bad validation.
    * buttonHidden:   true | false        -> Hide bottom buttons. (true hidden).
    * onSaveFunction: function            -> CallBack function to interact with the result object.
+   * onFinishRender: function            -> CallBack function to be called after rendering the HTML in the DOM. 
    * readOnly: true | false              -> If it's true, inputs won't be editable.
 
    Considerations:--------------------------------------------------------------------------------------
 
-   - All values could be null, and then be completed in the Form.
+   - All values can be null, and then completed in the Form.
    - In case a field was hidden, you should know that the user won't be able to complete it,
    so it should have a value SET, unless it's no-required.
 
@@ -202,6 +203,10 @@
     console.log(data);
     toastr.success("Element added successfuly");
   };
+  //That's an example of a CallBack function which will be called after rendering the html in the DOM. 
+  var func2 = function(){
+    console.log("Render Finished")
+  };
 
   //Example 1
   $('#FormButton').on('click', function () {
@@ -210,6 +215,7 @@
     new jQuery.DwecProject.Form(jQuery("#crudForm"), null, {
       wrapperType: 'modal',
       wrapperTitle: "Modal Example",
+      onFinishRender:func2,
       onSaveFunction: func,
       extraData: obj,
       toastAdvice: true,
@@ -224,6 +230,7 @@
     new jQuery.DwecProject.Form(jQuery(".leftCont"), null, {
       wrapperType: 'container',
       wrapperTitle: "Form Left",
+      onFinishRender:func2,
       onSaveFunction: func,
       extraData: obj,
       toastAdvice: true,
@@ -237,8 +244,9 @@
     new jQuery.DwecProject.Form(jQuery(".rightCont"), null, {
       wrapperType: 'container',
       wrapperTitle: "Form Right",
+      onFinishRender:func2,
       onSaveFunction: func,
-      extraData: obj,
+      //extraData: obj,
       toastAdvice: true,
       fieldRedAdvice: true,
       buttonHidden: false,
