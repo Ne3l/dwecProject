@@ -352,7 +352,8 @@
         //Rendering of Dropdown Button
         var input = "";
         $.each(obj['uriData'], function (key2) {
-          input += base.options.htmlRender.dropDownElement.format({itemName: obj['uriData'][key2]});
+          input += base.options.htmlRender.dropDownElement.format({itemName: key2});
+          //input += base.options.htmlRender.dropDownElement.format({itemName: obj['uriData'][key2]});
         });
         input = base.options.htmlRender.dropDownButton(obj['name'], obj['label'],input );
         return input;
