@@ -210,8 +210,6 @@
 
   //Example 1
   $('#FormButton').on('click', function () {
-    //new jQuery.Plugin.Form(jQuery("#CrudForm"), null, {formData:obj,onSaveFunction:func}); //rendered in modal
-    //new jQuery.DwecProject.Form(jQuery(".note-info"), null, {extraData:obj,wrapperType:'container'}); //rendered in modal
     new jQuery.DwecProject.Form(jQuery("#crudForm"), null, {
       wrapperType: 'modal',
       wrapperTitle: "Modal Example",
@@ -226,7 +224,6 @@
   });
   //Example 2
   $('#FormButton2').on('click', function () {
-    //new jQuery.Plugin.Form(jQuery(".note-info"), null, {display: 'modal', hiddenButtons: true}); //rendered in container
     new jQuery.DwecProject.Form(jQuery(".leftCont"), null, {
       wrapperType: 'container',
       wrapperTitle: "Form Left",
@@ -239,8 +236,8 @@
       readOnly:false
     });
   });
+  //Example 3
   $('#FormButton3').on('click', function () {
-    //new jQuery.Plugin.Form(jQuery(".note-info"), null, {display: 'modal', hiddenButtons: true}); //rendered in container
     new jQuery.DwecProject.Form(jQuery(".rightCont"), null, {
       wrapperType: 'container',
       wrapperTitle: "Form Right",
