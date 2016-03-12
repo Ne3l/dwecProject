@@ -119,24 +119,25 @@
         });
 
         $element.on("drop", function (event) {
-          // TODO dani funcion drop
           event.preventDefault();
           event.stopPropagation();
           this.style.backgroundColor = 'rgba(255,255,255,1)';
           if (base.el.id == event.originalEvent.dataTransfer.getData('Padre')) {
             var color = event.originalEvent.dataTransfer.getData('colorGeneric');
             var tipoEvento = event.originalEvent.dataTransfer.getData('tipoEvento');
-            var fechaStart = this.getAttribute('data-date') + "T12:01:00";
-            var fechaEnd = this.getAttribute('data-date') + "T18:01:00";
+            var fechaStart = this.getAttribute('data-date');
+            var fechaEnd = this.getAttribute('data-date');
             var url = base.options.dataUrls.host + base.options.dataUrls.addEvents; //base.options.urlAdd;
-            var sendData = { //TODO coger del formulario
-              "name": "Evento " + tipoEvento,
-              "description": "Descripcion del Evento",
+
+            //Data to be passed with filled information
+            var baseData = {
+              "name": tipoEvento,
+              "description": null,
               "startDate": fechaStart,
               "endDate": fechaEnd,
-              "eventType": "SESSION",
-              "status": "NOT_DEFINED",
-              "eventGroup": {"id": event.originalEvent.dataTransfer.getData('idGeneric')},
+              "eventType": null,
+              "status": null,
+              "eventGroup": event.originalEvent.dataTransfer.getData('idGeneric'),
               "content": {
                 "data": [{"label": "Prueba", "note": "Loren ipsum"}, {"label": "Prueba", "note": "Loren ipsum"}]
               },
@@ -150,14 +151,51 @@
               }
             };
 
+            //Callback function on saved form
+            var onSave = function(data) {
+              var sendData = {
+                "name": data.name,
+                "description": data.description,
+                "startDate": data.startDate,
+                "endDate": data.endDate,
+                "eventType": data.eventType,
+                "status": data.status,
+                "eventGroup": {"id": data.eventGroup},
+                "content": {
+                  "data": []
+                },
+                "configuration": {
+                  "data": []
+                }
+              };
+              base.doAjax(url, 'POST', sendData, fOnSuccessCallback, fOnErrorCallback);
+            };
+
+            var onRendered = function(data) {
+              console.log(data);
+            };
+
+            //Call to Form plugin with desired data
+            new jQuery.DwecProject.Form(jQuery("#form"), null, {
+              wrapperType: 'modal',
+              wrapperTitle: "Modal Example",
+              onFinishRender: onRendered,
+              onSaveFunction: onSave,
+              extraData: baseData,
+              toastAdvice: true,
+              fieldRedAdvice: true,
+              buttonHidden: false,
+              readOnly: false
+            });
+
             var fOnSuccessCallback = function fOnSuccessCallback(response) {
               var myEvent = {
                 id: response.id,
-                title: "Evento " + tipoEvento,
-                start: fechaStart,
-                end: fechaEnd, //"2016-02-03T12:01:00"
+                title: response.name,
+                start: response.startDate,
+                end: response.endDate, //"2016-02-03T12:01:00"
                 color: color,
-                allDay: base.allDay(fechaStart, fechaEnd)
+                allDay: base.allDay(response.startDate, response.endDate)
               };
               base.$calendar.fullCalendar('renderEvent', myEvent);
               toastr.success(myEvent.title, base.options.messages.addEvents.success);
@@ -167,7 +205,6 @@
               toastr.error("Ups!", base.options.messages.addEvents.error);
             };
 
-            base.doAjax(url, 'POST', sendData, fOnSuccessCallback, fOnErrorCallback);
           }
         });
       });
@@ -282,6 +319,83 @@
 
     base.allDay = function (start, end) {
       return (moment(end).diff(moment(start), 'hours') >= base.options.allDay);
+    };
+
+    /**
+     * Add a new event (through the Form plugin).
+     */
+    base.addEvent = function () {
+      base.$addEventBtn = base.$el.find('.event_add');
+      base.$addEventBtn.on("click", function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        //Extra data to be passed (required by the Form plugin)
+        var eventGrp = {
+          "eventGroup": {"id": 32},
+          "content": {"data": []},
+          "configuration": {"data": []}
+        };
+
+        //Callback function on saved form
+        var onSave = function(data) {
+          var sendData = {
+            "name": data.name,
+            "description": data.description,
+            "startDate": data.startDate,
+            "endDate": data.endDate,
+            "eventType": data.eventType,
+            "status": data.status,
+            "eventGroup": {"id": data.eventGroup},
+            "content": {
+              "data": []
+            },
+            "configuration": {
+              "data": []
+            }
+          };
+          var url = base.options.dataUrls.host + base.options.dataUrls.addEvents;
+          base.doAjax(url, 'POST', sendData, fOnSuccessCallback, fOnErrorCallback);
+        };
+
+        var onRendered = function(data) {
+          console.log(data);
+        };
+
+        //Call to Form plugin with desired data
+        new jQuery.DwecProject.Form(jQuery("#form"), null, {
+          wrapperType: 'modal',
+          wrapperTitle: "Modal Example",
+          onFinishRender: onRendered,
+          onSaveFunction: onSave,
+          extraData: eventGrp,
+          toastAdvice: true,
+          fieldRedAdvice: true,
+          buttonHidden: false,
+          readOnly: false
+        });
+
+        //Callback function on successful upload
+        var fOnSuccessCallback = function fOnSuccessCallback(response) {
+          console.log(response);
+          var myEvent = {
+            id: response.id,
+            title: response.name,
+            start: response.startDate,
+            end: response.endDate, //"2016-02-03T12:01:00"
+            //color: color,
+            allDay: base.allDay(response.startDate, response.endDate)
+          };
+          base.$calendar.fullCalendar('renderEvent', myEvent);
+          toastr.success(myEvent.title, base.options.messages.addEvents.success);
+        };
+
+        //Callback function on failed upload
+        var fOnErrorCallback = function fOnErrorCallback() {
+          toastr.error("Ups!", base.options.messages.addEvents.error);
+        };
+
+      });
     };
 
     /**
@@ -420,7 +534,7 @@
       delEvents: "clear/"
     },
     initialObject: function () {
-      return {eventGroup: 32};
+      return {eventGroup: {id: 32}};
     }
   };
   $.fn.Dwec_Calendar = function (getData, options) {
