@@ -1,0 +1,23 @@
+.dwecCalendarContainer {
+    margin-bottom: 6%;
+}
+
+.dwecCalendarContainer .action-box {
+    padding-bottom: 10px;
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.dwecCalendarContainer .binWrapper {
+    height: auto;
+    display: flex;
+    align-items: center;
+}
+
+.dwecCalendarContainer .binWrapper .bin {
+    font-size: 30px;
+    z-index: 20000;
+}
