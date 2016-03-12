@@ -44,7 +44,7 @@
             base.table = $("#table_" + base.id);
 
             //Button add on the element
-            base.$el.find("[data-action = 'add']").click(function () {
+            base.$el.find('[data-action = "'+base.options.actionsNames.add+'"]').click(function () {
                 try {
                     base.doAdd($(this).data("uri"));
                 } catch (e) {
@@ -53,7 +53,7 @@
             });
 
             //Edit action, this will open a form
-            base.table.on('click', 'span[data-action = "set"]', function () {
+            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.edit+'"]', function () {
                 try {
                     base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
                 } catch (e) {
@@ -62,7 +62,7 @@
             });
 
             //Show action, this will open a form
-            base.table.on('click', 'span[data-action = "find"]', function () {
+            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.show+'"]', function () {
                 try {
                     base.doShow($(this).siblings("input").val());
                 } catch (e) {
@@ -71,7 +71,7 @@
             });
 
             //This directly deletes directly the
-            base.table.on('click', 'span[data-action = "clear"]', function () {
+            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.delete+'"]', function () {
                 try {
                     base.doDelete($(this).data("uri"), $(this).siblings("input").val());
                 } catch (e) {
@@ -491,13 +491,20 @@
             edit: "Updating Element",
             show: "Showing Element"
         },
+        //This must to match with the uris of the api e.g: events/add
+        actionsNames:{
+            add:"add",
+            edit:"set",
+            show:"find",
+            delete:"clear"
+        },
         successCRUDMessages: {
             add: "Element correctly added!",
             edit: "Element correctly updated!",
             delete: "Element correctly deleted!"
         },
         onRenderItemForm: function (data) {
-            console.log("formLoaded");
+            console.log("formLoaded" + data);
         }
     };
 
