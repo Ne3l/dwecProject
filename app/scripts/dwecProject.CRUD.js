@@ -97,11 +97,11 @@
 
         //CRUD Methods
         /**
-         * Creates a form instance into the formWrapper div and makes the new object to insert it on the api
-         * @param uri
+         * Generic function that using the common attributes of any action and getting the different ones process the action
+         * @param diffOptions
          */
-        base.doAdd = function (uri) {
-            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+        base.doGenerateForm = function (diffOptions) {
+            var defOptions = {
                 restService: {
                     host: base.options.host,
                     structure: base.options.actions,
@@ -109,11 +109,21 @@
                     innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
                 },
                 toastAdvice: true,
+                onFinishRender: function (data) {
+                    base.options.onRenderItemForm(data);
+                }
+            };
+            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, $.extend({}, defOptions, diffOptions));
+        };
+
+        /**
+         * Adds an element
+         * @param uri
+         */
+        base.doAdd = function (uri) {
+            base.doGenerateForm({
                 wrapperTitle: base.options.formTitles.add,
                 extraData: base.options.initialObject(),
-                onFinishRender: function (data) {
-                    //TODO: Pass it to the base options commented function?
-                },
                 onSaveFunction: function (data) {
                     base.doProcessRequest(uri, "POST", data, function () {
                         toastr.success(base.options.successCRUDMessages.add);
@@ -124,44 +134,29 @@
         };
 
         /**
+         * Updates an element
          * @param o
          * @param uri
          */
         base.doUpdate = function (o, uri) {
-            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                restService: {
-                    host: base.options.host,
-                    structure: base.options.actions,
-                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
-                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
-                },
-                toastAdvice: true,
+            base.doGenerateForm({
                 wrapperTitle: base.options.formTitles.edit,
                 extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
-                onFinishRender: function (data) {
-
-                },
                 onSaveFunction: function (data) {
                     base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", data, function () {
                         toastr.success(base.options.successCRUDMessages.edit);
                         base.dataTable.ajax.reload(null, false);
                     })
                 }
-            });
+            })
         };
 
         /**
-         * Shows the form without the action buttons, just to see the information
+         * Shows an element using form
          * @param o
          */
         base.doShow = function (o) {
-            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                restService: {
-                    host: base.options.host,
-                    structure: base.options.actions,
-                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
-                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
-                },
+            base.doGenerateForm({
                 wrapperTitle: base.options.formTitles.show,
                 extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
                 buttonHidden: true,
@@ -485,7 +480,7 @@
             500: "Internal Server Error"
         },
         initialObject: function () {
-            return {eventGroup:{id: 32}};
+            return {eventGroup: {id: 32}};
         },
         defaultFormRestAttributes: {
             structureArrayIndex: "fields",
@@ -500,13 +495,10 @@
             add: "Element correctly added!",
             edit: "Element correctly updated!",
             delete: "Element correctly deleted!"
+        },
+        onRenderItemForm: function (data) {
+            console.log("formLoaded");
         }
-        /*
-         onRenderItemForm:function(selectedItem){  //each form render will execute this callback function needed for additional plugins
-         console.log("cargado formulario");
-
-         }
-         */
     };
 
     /**
