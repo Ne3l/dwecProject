@@ -17,8 +17,6 @@
         base.el = el;
         base.actionsArray = [];
         base.fieldsArray = [];
-        base.eventTypes = {};
-        base.eventStatus = {};
         base.dataTable = {};
         base.table = null;
         // Add a reverse reference to the DOM object
@@ -34,8 +32,6 @@
                     base.renderExternalButton(); //I need to execute it here, because actions array is empty
                     base.renderTable();
                 });
-                base.setEventTypes();
-                base.setEventStatus();
             } catch (e) {
                 console.log("Something goes wrong in the init" + e);
             }
@@ -105,12 +101,22 @@
          * @param uri
          */
         base.doAdd = function (uri) {
-            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                formData: {eventGroup: base.options.eventGroup},
-                structure: base.options.actions,
+            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                restService: {
+                    host: base.options.host,
+                    structure: base.options.actions,
+                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
+                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
+                },
+                toastAdvice: true,
+                wrapperTitle: base.options.formTitles.add,
+                extraData: base.options.initialObject(),
+                onFinishRender: function (data) {
+                    //TODO: Pass it to the base options commented function?
+                },
                 onSaveFunction: function (data) {
-                    base.doProcessRequest(uri, "POST", base.doGenerateFormattedObject(data), function () {
-                        toastr.success("Element correctly added");
+                    base.doProcessRequest(uri, "POST", data, function () {
+                        toastr.success(base.options.successCRUDMessages.add);
                         base.dataTable.ajax.reload(null, false);
                     })
                 }
@@ -122,12 +128,22 @@
          * @param uri
          */
         base.doUpdate = function (o, uri) {
-            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                formData: base.doGenerateFormProcessableObject(JSON.parse(o)),
-                structure: base.options.actions,
+            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                restService: {
+                    host: base.options.host,
+                    structure: base.options.actions,
+                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
+                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
+                },
+                toastAdvice: true,
+                wrapperTitle: base.options.formTitles.edit,
+                extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                onFinishRender: function (data) {
+
+                },
                 onSaveFunction: function (data) {
-                    base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", base.doGenerateFormattedObject(data), function () {
-                        toastr.success("Element correctly edited");
+                    base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", data, function () {
+                        toastr.success(base.options.successCRUDMessages.edit);
                         base.dataTable.ajax.reload(null, false);
                     })
                 }
@@ -139,10 +155,17 @@
          * @param o
          */
         base.doShow = function (o) {
-            new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                formData: base.doGenerateFormProcessableObject(JSON.parse(o)),
-                structure: base.options.actions,
-                hiddenButtons: true
+            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, {
+                restService: {
+                    host: base.options.host,
+                    structure: base.options.actions,
+                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
+                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
+                },
+                wrapperTitle: base.options.formTitles.show,
+                extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                buttonHidden: true,
+                readOnly: true
             });
         };
 
@@ -153,76 +176,10 @@
          */
         base.doDelete = function (uri, o) {
             base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
-                toastr.success("This element has been correctly removed", "Deleting");
+                toastr.success(base.options.successCRUDMessages.delete);
                 base.dataTable.ajax.reload(null, false);
                 base.dataTable.clear(); //Need this in case of removing last element
             });
-        };
-
-        //HELPER FUNCTIONS
-        /**
-         * Makes a ajax request to load the event status, only needed to adapt the form
-         */
-        base.setEventStatus = function () {
-            base.doProcessRequest(base.options.eventStatusUri, "GET", {}, function (data) {
-                base.eventStatus = data;
-            })
-        };
-
-        /**
-         * Makes a ajax request to load the event type, only needed to adapt the form
-         */
-        base.setEventTypes = function () {
-            base.doProcessRequest(base.options.eventTypeUri, "GET", {}, function (data) {
-                base.eventTypes = data;
-            })
-        };
-
-        /**
-         * Looks for a key in an object by a given value
-         * @param val
-         * @param o
-         * @returns {string}
-         */
-        base.getKey = function (val, o) {
-            var key = "";
-            $.each(o, function (k, v) {
-                if (v == val.trim()) {
-                    key = k;
-                }
-            });
-
-            return key;
-        };
-        /**
-         * TODO: Try to allow updates of configuration
-         * Generates a correct event or event group object using the data of the form.
-         * @param data
-         * @returns {{}}
-         */
-        base.doGenerateFormattedObject = function (data) {
-            var o = {};
-            for (var i = 0; i < base.fieldsArray.length; i++) {
-                if (base.fieldsArray[i].type == 'json') {
-                    try {
-                        if (base.fieldsArray[i].name == 'configuration' || data[base.fieldsArray[i].name] == null)
-                            o[base.fieldsArray[i].name] = JSON.parse('{"data":[]}');
-                        else
-                            o[base.fieldsArray[i].name] = JSON.parse(data[base.fieldsArray[i].name]);
-                    } catch (e) {
-                        console.log(e);
-                    }
-                }
-                else if (base.fieldsArray[i].type == 'optionList') {
-                    if (base.fieldsArray[i].name == 'eventType')
-                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventTypes);
-                    else
-                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventStatus);
-                }
-                else
-                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: data[base.fieldsArray[i].name]} : data[base.fieldsArray[i].name];
-            }
-            return o;
         };
 
         /**
@@ -233,16 +190,13 @@
         base.doGenerateFormProcessableObject = function (data) {
             var o = {};
             for (var i = 0; i < base.fieldsArray.length; i++) {
-                if (base.fieldsArray[i].type == 'json')
-                    o[base.fieldsArray[i].name] = JSON.stringify(data[base.fieldsArray[i].name]);
-                else if (base.fieldsArray[i].type == 'optionList')
+                if (base.fieldsArray[i].type == 'optionList')
                     o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name].itemLabel;
                 else if (base.fieldsArray[i].type == 'date')
                     o[base.fieldsArray[i].name] = moment(data[base.fieldsArray[i].name]).format("YYYY-MM-DD");
                 else
-                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? data[base.fieldsArray[i].name].id : data[base.fieldsArray[i].name];
+                    o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
             }
-
             return o;
         };
 
@@ -342,7 +296,6 @@
             base.addEvents();
         };
 
-
         /**
          * Generic function that choose which method call according to the "o" value
          * @returns {*}
@@ -425,6 +378,7 @@
                     ],
                     "sAjaxDataProp": "",
                     "ajax": function (data, callback, settings) {
+                        //Deprecated since version [explicar porque]
                         settings.jqXHR = $.ajax({
                             url: base.options.host + base.options.ajaxTable.url,
                             dataType: "json",
@@ -530,9 +484,29 @@
             415: "Unsupported Media Type",
             500: "Internal Server Error"
         },
-        eventGroup: 32,
-        eventTypeUri: "getEventTypes",
-        eventStatusUri: "getEventStatus"
+        initialObject: function () {
+            return {eventGroup:{id: 32}};
+        },
+        defaultFormRestAttributes: {
+            structureArrayIndex: "fields",
+            innerUriDataAttribute: "uriData"
+        },
+        formTitles: {
+            add: "Adding Element",
+            edit: "Updating Element",
+            show: "Showing Element"
+        },
+        successCRUDMessages: {
+            add: "Element correctly added!",
+            edit: "Element correctly updated!",
+            delete: "Element correctly deleted!"
+        }
+        /*
+         onRenderItemForm:function(selectedItem){  //each form render will execute this callback function needed for additional plugins
+         console.log("cargado formulario");
+
+         }
+         */
     };
 
     /**
