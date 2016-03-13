@@ -74,7 +74,7 @@
 
           // Error
           case 0:
-            console.exception(text);
+            console.error(text);
             break;
           // Waring
           case 1:
@@ -100,7 +100,7 @@
       var defaultC = 3;
 
       try {
-        if (dwecProject.gFunctions.isNumber(args[0])) {
+        if (typeof (args[0]) === 'number') {
           defaultC = args[0];
           ini++;
         }
@@ -113,7 +113,7 @@
 
         for (; ini < args.length; ini++) {
 
-          if (dwecProject.gFunctions.isNum(args[ini]) && (typeof (args[ini + 1]) !== 'object' || ini === 0)) {
+          if (typeof (args[ini]) === 'number' && (typeof (args[ini + 1]) !== 'object' || ini === 0)) {
             print(args[ini], args[ini + 1]);
             ini++;
           } else if (typeof (args[ini]) === 'object') {
@@ -127,9 +127,25 @@
         }
 
       } catch (e) {
-        console.exception(e);
+        console.error(e);
       }
       console.groupEnd();
+    },
+
+    /**
+     * Return hexa random color
+     * @returns {string}
+     */
+    getRandomColor: function () {
+      return "#" + ((1 << 24) * Math.random() | 0).toString(16);
+    },
+
+    /**
+     * Return the language of browser
+     * @returns {string}
+     */
+    getBrowserLanguage: function () {
+      return window.navigator.language;
     },
 
     /**
@@ -137,9 +153,11 @@
      * @param name
      * @returns {*}
      */
-    getRandomName: function (name) {
-      return name + Math.floor(Math.random() * 500000);
-    },
+    getRandomName: function () {
+      return Math.floor(Math.random() * 500000);
+    }
+
+    ,
 
     /**
      * Replace {id} by {id: "dwecProject1231"}
@@ -159,5 +177,54 @@
         return col[n];
       });
     }
-}
+    ,
+    doAjax: function (url, method, sendData, fOnSuccessCallback, fOnErrorCallback) {
+
+      var showMessage = $.dwecProject.gFunctions.showMessage.bind();
+
+      if (!fOnSuccessCallback)
+        fOnSuccessCallback = function () {
+        };
+
+      if (!fOnErrorCallback)
+        fOnErrorCallback = function () {
+        };
+
+      var callBackFunctions = {
+
+        200: function (response) {
+          fOnSuccessCallback(response);
+        },
+        201: function (response) {
+          fOnSuccessCallback(response);
+        },
+        204: function (response) {
+          fOnSuccessCallback();
+        },
+        400: function (response) {
+          showMessage(0, "400", response);
+          fOnErrorCallback();
+        },
+        404: function (response) {
+          showMessage(0, "404", response);
+          fOnErrorCallback();
+        },
+        500: function (response) {
+          showMessage(0, "500", response);
+          fOnErrorCallback();
+        }
+      };
+      $.ajax({
+        /* headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json'
+         },*/
+        url: url,
+        method: method,
+        //dataType: 'json',
+        data: sendData,
+        statusCode: callBackFunctions
+      });
+    }
+  }
 })(window.jQuery);
