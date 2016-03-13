@@ -44,7 +44,7 @@
             base.table = $("#table_" + base.id);
 
             //Button add on the element
-            base.$el.find('[data-action = "'+base.options.actionsNames.add+'"]').click(function () {
+            base.$el.find('[data-action = "' + base.options.actionsNames.add + '"]').click(function () {
                 try {
                     base.doAdd($(this).data("uri"));
                 } catch (e) {
@@ -53,7 +53,7 @@
             });
 
             //Edit action, this will open a form
-            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.edit+'"]', function () {
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.edit + '"]', function () {
                 try {
                     base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
                 } catch (e) {
@@ -62,7 +62,7 @@
             });
 
             //Show action, this will open a form
-            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.show+'"]', function () {
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.show + '"]', function () {
                 try {
                     base.doShow($(this).siblings("input").val());
                 } catch (e) {
@@ -71,9 +71,10 @@
             });
 
             //This directly deletes directly the
-            base.table.on('click', 'span[data-action = "'+base.options.actionsNames.delete+'"]', function () {
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.delete + '"]', function () {
                 try {
-                    base.doDelete($(this).data("uri"), $(this).siblings("input").val());
+                    base.doShowConfirmModal($(this).data("uri"), $(this).siblings("input").val());
+                    //base.doDelete($(this).data("uri"), $(this).siblings("input").val());
                 } catch (e) {
                     console.log(e);
                 }
@@ -93,6 +94,14 @@
                 var table = $(this).closest('table');
                 table.find("input[type = 'checkbox']").prop('checked', $(this).is(":checked"));
             });
+
+            //Modal event
+            base.$el.find("#modal_"+base.id+" button[data-action = 'confirmDeletion']").on("click", function(){
+                base.doDelete(base.$el.find(".modal").data("uri"), base.$el.find(".modal").data("object"));
+            });
+
+            //Interval to put styles into checkbox using the uniform plugin
+            setInterval(function(){base.doCallUniformPlugin()}, 100);
         };
 
         //CRUD Methods
@@ -256,6 +265,7 @@
             }
             base.$el.append(base.format(base.options.templates.buttonGroup, {buttons: buttons}));
             base.$el.append(base.options.templates.divForm);
+            base.$el.append(base.format(base.options.templates.divModal, {id: "modal_"+base.id}));
         };
 
         /**
@@ -267,11 +277,11 @@
             try {
                 var endPos = template.lastIndexOf("/");
                 var startPos = template.lastIndexOf("/", endPos - 1);
-
                 return template.substring(startPos + 1, endPos)
             }
             catch (e) {
                 console.log(e);
+                return "";
             }
         };
 
@@ -288,7 +298,20 @@
 
             base.$el.append(table);
             base.doGenerateDatatablesObject(base.getDataForDataTables());
+            base.renderModal();
             base.addEvents();
+        };
+
+        /**
+         * This calls the uniform plugin to render correctly the checkboxes
+         */
+        base.doCallUniformPlugin = function(){
+            try{
+                $("input[type='checkbox']").uniform({radioClass: 'choice'});
+            }
+            catch(e){
+                console.log("Uniform plugin not found! Add js and css references to the html");
+            }
         };
 
         /**
@@ -371,7 +394,7 @@
                         [5, 10, 25, 50, 100, -1],
                         [5, 10, 25, 50, 100, "All"]
                     ],
-                    "sAjaxDataProp": "",  //This property is deprecated since version 1.9. The equivalent is dataSrc but it can be used in property "ajax" as a function
+                    "sAjaxDataProp": "",  //This property is deprecated since version 1.9. The equivalent is dataSrc but it can't be used in property "ajax" as a function
                     "ajax": function (data, callback, settings) {
                         settings.jqXHR = $.ajax({
                             url: base.options.host + base.options.ajaxTable.url,
@@ -423,6 +446,30 @@
             return rapidActions;
         };
 
+        //MODAL
+        base.renderModal = function () {
+            base.$el.find("#modal_"+base.id).html(base.getModalString());
+        };
+
+        base.getModalString = function () {
+            return base.format('<div class="modal fade" role="dialog"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{title}</h4></div><div class="modal-footer"><button type="button" class="btn sbold green" data-dismiss="modal" data-action = "confirmDeletion">{proceed}</button><button type="button" class="btn sbold" data-dismiss="modal" data-action = "cancelDeletion">{cancel}</button></div></div></div></div></div>',
+                {
+                    title:base.options.confirmModal.title,
+                    proceed: base.options.confirmModal.success,
+                    cancel: base.options.confirmModal.cancel
+                });
+        };
+
+        /**
+         * Shows the modal to confirm a deletion and saves the data needed for the deletion via data attributes
+         */
+        base.doShowConfirmModal = function (uri, value) {
+            base.$el.find(".modal").data("uri", uri);
+            base.$el.find(".modal").data("object", value);
+            base.$el.find(".modal").modal("show");
+        };
+
+        //HELPERS
         /**
          * Returns a formatted hidden input with the content of the full object for the form
          * @param data
@@ -461,14 +508,15 @@
             table: "<table id='{id}' class='{classCss}'>{header}</table>",
             header: "<thead><tr>{elements}</tr></thead>",
             cell: "<th>{content}</th>",
-            rapidAction: "<span class = '{icon}' data-action='{action}' data-uri='{uri}' style='margin: 5px'></span>",
+            rapidAction: "<span class = '{icon} rapidAction' data-action='{action}' data-uri='{uri}'></span>",
             buttonGroup: "<div class='table-toolbar row'><div class='col-md-6 btn-group'>{buttons}</div></div>",
-            button: "<button class='btn sbold green' data-action='{action}' data-uri='{uri}'>{text} <span class='{icon}'></span></button>",
+            button: "<button class='btn sbold green minMarginForButtons' data-action='{action}' data-uri='{uri}'>{text} <span class='{icon}'></span></button>",
             input: "<input type='{type}' value ='{value}'>",
-            divForm: "<div data-action='formWrapper'></div>"
+            divForm: "<div data-action='formWrapper'></div>",
+            divModal: "<div id = '{id}' data-action='modalWrapper'></div>"
         },
         classes: {
-            table: "table table-striped table-bordered table-hover table-checkable order-column"
+            table: "table table-bordered table-hover table-checkable order-column"
         },
         httpStatus: {
             400: "Bad Request",
@@ -491,19 +539,24 @@
             show: "Showing Element"
         },
         //This must to match with the uris of the api e.g: events/add
-        actionsNames:{
-            add:"add",
-            edit:"set",
-            show:"find",
-            delete:"clear"
+        actionsNames: {
+            add: "add",
+            edit: "set",
+            show: "find",
+            delete: "clear"
         },
         successCRUDMessages: {
             add: "Element correctly added!",
             edit: "Element correctly updated!",
             delete: "Element correctly deleted!"
         },
+        confirmModal:{
+            title:"Do you want to delete this?",
+            success:"Sure",
+            cancel:"Forget it..."
+        },
         onRenderItemForm: function (data) {
-            console.log("formLoaded" + data);
+
         }
     };
 
