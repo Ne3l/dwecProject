@@ -19,7 +19,7 @@
 
 .dwecCalendarContainer .binWrapper .bin {
     font-size: 30px;
-    z-index: 20000;
+    z-index: 10000;
 }
 
 .external-events-wrapper {
