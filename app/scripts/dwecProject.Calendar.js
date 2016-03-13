@@ -102,6 +102,17 @@
         };
 
         /**
+         * Helper method. Allows a draggable event to be dropped.
+         * @param $element
+         */
+        base.allowDrop = function ($element) {
+            //Allows On Drop
+            $element.on("dragover", function (event) {
+                event.preventDefault();
+            });
+        };
+
+        /**
          * Adds functionality to drag generic events(Outside calendar) and drop them inside calendar.
          */
         base.addOnDragOverDays = function () {
@@ -110,7 +121,7 @@
             base.$el.find('.fc-day').each(function (key, value) {
                 var $element = $(this);
 
-                $element.on("dragover", function (event) {
+                $element.on("dragenter", function (event) {
                     event.preventDefault();
                     event.stopPropagation();
                     this.style.backgroundColor = 'rgba(50,197,210,0.3)';
@@ -121,6 +132,8 @@
                     event.stopPropagation();
                     this.style.backgroundColor = 'rgba(255,255,255,1)';
                 });
+
+                base.allowDrop($element);
 
                 $element.on("drop", function (event) {
                     event.preventDefault();
@@ -238,6 +251,33 @@
          * Add functionality to the bin
          */
         base.addBinListeners = function () {
+
+            var dragenter = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                base.$bin.css("color", base.options.bin.colorHover);
+            };
+
+            var dragleave = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                base.$bin.css("color", base.options.bin.color);
+            };
+
+            var drop = function (event) {
+                var genericEvent = base.$eventBox.find("[event-id='" + event.originalEvent.dataTransfer.getData('event-id') + "']")[0];
+                var fOnSuccessCallback = function (id) {
+                    toastr.success(genericEvent.innerHTML, base.options.messages.delEvents.success);
+                };
+
+                base.removeEvent(genericEvent, base.$eventBox, fOnSuccessCallback);
+            };
+
+            base.$bin.on("dragenter", dragenter);
+            base.$bin.on("dragleave", dragleave);
+            base.allowDrop(base.$bin);
+            base.$bin.on("drop", drop);
+
             base.$bin.mouseenter(function () {
                 base.$bin.css("color", base.options.bin.colorHover);
                 base.delete = true;
@@ -263,6 +303,7 @@
                 event.originalEvent.dataTransfer.setData('EventType', event.currentTarget.innerHTML);
                 event.originalEvent.dataTransfer.setData('group-id', genericEvent.eventGroup.id);
                 event.originalEvent.dataTransfer.setData('colorGeneric', event.currentTarget.style.backgroundColor);
+                event.originalEvent.dataTransfer.setData('event-id', genericEvent.id);
             };
 
             base.$eventBox.append($(divEvents.replace("{classes}", classes)
@@ -324,7 +365,7 @@
                         "endDate": data.endDate,
                         "eventType": data.eventType,
                         "status": data.status,
-                        "eventGroup": {"id": data.eventGroup},
+                        "eventGroup": data.eventGroup,
                         "content": {
                             "data": []
                         },
@@ -383,8 +424,10 @@
          * In case of close just show again the event.
          * @param event
          */
-        base.removeEvent = function (event) {
-            base.$calendar.find("#" + event.id).hide();
+        base.removeEvent = function (event, wrapper, fOnSuccessCallback) {
+            var $wrapper = base.$el.find(wrapper);
+            var $event = $wrapper.find("[event-id='" + event.getAttribute("event-id") + "']");
+            $event.hide();
 
             //Set texts
             base.$calendarModal.find(".modal-title").text(event.title);
@@ -397,21 +440,18 @@
             base.$calendarModal.find("#close").unbind("click");
 
             base.$calendarModal.find("#close").on("click", function () {
-                base.$calendar.find("#" + event.id).show();
+                $event.show();
             });
 
             base.$calendarModal.find("#accept").on("click", function () {
-                var fOnSuccessCallback = function (id) {
-                    base.$calendar.fullCalendar('removeEvents', event.id);
-                    toastr.success(event.title, base.options.messages.delEvents.success);
-                };
                 var fOnErrorCallback = function () {
                     toastr.error(event.title, base.options.messages.delEvents.error);
                 };
 
-                base.doAjax(base.options.dataUrls.host + base.options.dataUrls.delEvents + event.id, 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
+                base.doAjax(base.options.dataUrls.host + base.options.dataUrls.delEvents + event.getAttribute("event-id"), 'DELETE', "", fOnSuccessCallback, fOnErrorCallback);
             });
             base.$calendarModal.modal('show');
+
         };
 
         /**
@@ -455,7 +495,11 @@
                 },
                 eventDragStop: function eventDragStop(event, jsEvent, ui, view) {
                     if (base.delete) {
-                        base.removeEvent(event);
+                        var fOnSuccessCallback = function (id) {
+                            base.$calendar.fullCalendar('removeEvents', event._id);
+                            toastr.success(event.title, base.options.messages.delEvents.success);
+                        };
+                        base.removeEvent(event, base.$calendar, fOnSuccessCallback);
                     }
                 },
                 events: function events(start, end, timezone, callback) {
@@ -495,15 +539,19 @@
                     base.doAjax(base.options.dataUrls.host + base.options.dataUrls.getEvents, "GET", null, fOnSuccessCallback, fOnErrorCallback);
                 },
                 eventRender: function (event, element) {
+                    element.attr("event-id", event.id);
                     var addNode = document.createElement("span");
                     addNode.setAttribute("class", 'glyphicon glyphicon-remove');
                     addNode.style.float = 'right';
                     addNode.style.zIndex = '2000';
                     addNode.addEventListener("click", function (event) {
-                        base.removeEvent(base.$calendar.fullCalendar('clientEvents', event.currentTarget.offsetParent.offsetParent.id)[0]);
+                        var fOnSuccessCallback = function (id) {
+                            toastr.success(event.title, base.options.messages.delEvents.success);
+                        };
+                        base.removeEvent(element[0], base.$calendar, fOnSuccessCallback);
                     });
+
                     element.context.childNodes[0].appendChild(addNode);
-                    element.attr("id", event.id);
                 }
             });
         };
