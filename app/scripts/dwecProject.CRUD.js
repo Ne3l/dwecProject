@@ -371,9 +371,8 @@
                         [5, 10, 25, 50, 100, -1],
                         [5, 10, 25, 50, 100, "All"]
                     ],
-                    "sAjaxDataProp": "",
+                    "sAjaxDataProp": "",  //This property is deprecated since version 1.9. The equivalent is dataSrc but it can be used in property "ajax" as a function
                     "ajax": function (data, callback, settings) {
-                        //Deprecated since version [explicar porque]
                         settings.jqXHR = $.ajax({
                             url: base.options.host + base.options.ajaxTable.url,
                             dataType: "json",
