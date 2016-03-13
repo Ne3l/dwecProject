@@ -296,7 +296,6 @@
          */
         base.renderGenericEvents = function (genericEvent) {
             var divEvents = '<div class="{classes}" {attr} draggable="true">{name}</div>';
-            var classes = 'external-event label label-default ui-draggable ui-draggable-handle';
 
             var onDragStart = function onDragStart(event) {
                 event.originalEvent.dataTransfer.setData('Instance', base.el.id);
@@ -306,7 +305,7 @@
                 event.originalEvent.dataTransfer.setData('event-id', genericEvent.id);
             };
 
-            base.$eventBox.append($(divEvents.replace("{classes}", classes)
+            base.$eventBox.append($(divEvents.replace("{classes}", base.options.genericEvents.classes)
                 .replace("{attr}", "group-id=" + genericEvent.eventGroup.id + " event-id=" + genericEvent.id)
                 .replace("{name}", genericEvent.name))
                 .on('dragstart', onDragStart));
@@ -496,10 +495,10 @@
                 eventDragStop: function eventDragStop(event, jsEvent, ui, view) {
                     if (base.delete) {
                         var fOnSuccessCallback = function (id) {
-                            base.$calendar.fullCalendar('removeEvents', event._id);
+                            base.$calendar.fullCalendar('removeEvents', event.id);
                             toastr.success(event.title, base.options.messages.delEvents.success);
                         };
-                        base.removeEvent(event, base.$calendar, fOnSuccessCallback);
+                        base.removeEvent(base.$calendar.find("[event-id='" + event.id + "']")[0], base.$calendar, fOnSuccessCallback);
                     }
                 },
                 events: function events(start, end, timezone, callback) {
@@ -614,6 +613,9 @@
         },
         events: {
             color: "#32c5d2"
+        },
+        genericEvents: {
+            classes: "external-event label label-default ui-draggable ui-draggable-handle"
         },
         initialObject: function () {
             return {eventGroup: {id: 32}};
