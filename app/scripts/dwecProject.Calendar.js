@@ -275,7 +275,6 @@
          * Changes the day of an event.
          * @param event
          * @param revertFunc
-         * @param info
          * @param success
          * @param error
          */
@@ -499,6 +498,7 @@
                     var addNode = document.createElement("span");
                     addNode.setAttribute("class", 'glyphicon glyphicon-remove');
                     addNode.style.float = 'right';
+                    addNode.style.zIndex = '2000';
                     addNode.addEventListener("click", function (event) {
                         base.removeEvent(base.$calendar.fullCalendar('clientEvents', event.currentTarget.offsetParent.offsetParent.id)[0]);
                     });
@@ -515,7 +515,7 @@
         nameButtonAdd: "Add Event",
         allDay: 5,
         externalEventsTitle: "Dragable Events",
-        estructureWrapersCalendar: "<div class='col-md-3 col-sm-12'><h3 class='event-form-title margin-bottom-20'>{externalEventsTitle}</h3><div class='external-events'><hr/><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='dwecCalendar' class='has-toolbar'></div></div></div>",
+        estructureWrapersCalendar: "<div class='col-md-3 col-sm-12 external-events-wrapper'><h3 class='event-form-title margin-bottom-20'>{externalEventsTitle}</h3><div class='external-events'><div class='event_box' class='margin-bottom-10'></div></div></div><div class='col-md-9 col-sm-12'><div class='dwecCalendar' class='has-toolbar'></div></div></div>",
         messages: {
             editEvent: {
                 error: "",

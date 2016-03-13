@@ -21,3 +21,7 @@
     font-size: 30px;
     z-index: 20000;
 }
+
+.external-events-wrapper {
+    padding-bottom: 100px;
+}
