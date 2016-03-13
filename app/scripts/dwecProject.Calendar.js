@@ -455,7 +455,7 @@
       $event.hide();
 
       //Set texts
-      base.$calendarModal.find(".modal-title").text(event.title);
+      base.$calendarModal.find(".modal-title").text($event.find('.fc-title')[0].innerHTML);
       base.$calendarModal.find("#content").text(base.options.messages.delEvents.modal.message);
       base.$calendarModal.find("#accept").text(base.options.messages.delEvents.modal.accept);
       base.$calendarModal.find("#close").text(base.options.messages.delEvents.modal.cancel);
