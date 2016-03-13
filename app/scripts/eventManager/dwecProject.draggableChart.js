@@ -157,6 +157,11 @@
     base.initPlugin = function () {
 
       // TODO Init plugin
+      if (base.options.chartCursorBallon) {
+        base.amChartOptions.chartCursor.categoryBalloonFunction = function (key) {
+          return key + " (" + base.amChartOptions.dataProvider[key][base.options.chartCursorBallonShow] + ")";
+        };
+      }
       base.amChart = window.AmCharts.makeChart(base.$el.attr('id'), base.amChartOptions);
       base.initCustomAfterAmChart();
       base.initListeners();
@@ -516,6 +521,8 @@
     'valueOffsets': 20,       // Specific the % when yo see on the offsets.
     'draggable': true,        // Specific if the chart is draggable or not.
     'triggers': true,         // Triggers enabled or not.
+    'chartCursorBallon': true,// Show or not the chart cursor ballon
+    'chartCursorBallonShow': "date", // Specific the attribute to show on chartCursor ballon
 
     ajaxEnabled: false,        // If this option is available, the data is obtained for the ajaxGet and var getData is ignored
     ajaxGet: "",               // Specific the URL what you get the data

@@ -122,13 +122,14 @@ function renderChart(data) {
   var dataGraph = {
     "dataProvider": [],
     "graphs": [],
-    "categoryField": "date"
+    "categoryField": "index"
   };
 
   $.each(data, function (key, micro) {
     var contentData = {
       "date": moment(micro.startDate).locale(window.navigator.language).format('L'),
-      "id": micro.id
+      "id": micro.id,
+      "index": key
     };
     $.each(micro.configuration.data, function (key1, content) {
       contentData[content.conceptType.itemValue] = content.value;
@@ -143,7 +144,10 @@ function renderChart(data) {
       "bullet": "round",
       "title": label,
       "valueField": value,
-      "type": "line"
+      "type": "line",
+      "balloonFunction": function (a, b) {
+        return "<b>"+ b.title+"</b><br>"+a.values.value;
+      }
     });
   });
 
@@ -200,7 +204,8 @@ $(document).ready(function(){
   var data = randomData();
 
   $('#liveTable').on('LiveTableReady', function(){
-    new $.dwecProject.draggableChart($('#am-graph'), renderChart(data),{});
+    var a = new $.dwecProject.draggableChart($('#am-graph'), renderChart(data),{});
+    console.log(a.data());
   });
 
   $('#am-graph').on('DraggableChartReady', function(){
