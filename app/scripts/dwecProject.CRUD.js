@@ -17,8 +17,6 @@
         base.el = el;
         base.actionsArray = [];
         base.fieldsArray = [];
-        base.eventTypes = {};
-        base.eventStatus = {};
         base.dataTable = {};
         base.table = null;
         // Add a reverse reference to the DOM object
@@ -34,8 +32,6 @@
                     base.renderExternalButton(); //I need to execute it here, because actions array is empty
                     base.renderTable();
                 });
-                base.setEventTypes();
-                base.setEventStatus();
             } catch (e) {
                 console.log("Something goes wrong in the init" + e);
             }
@@ -48,23 +44,40 @@
             base.table = $("#table_" + base.id);
 
             //Button add on the element
-            base.$el.find("[data-action = 'add']").click(function () {
-                base.doAdd($(this).data("uri"));
+            base.$el.find('[data-action = "' + base.options.actionsNames.add + '"]').click(function () {
+                try {
+                    base.doAdd($(this).data("uri"));
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //Edit action, this will open a form
-            base.table.on('click', 'span[data-action = "set"]', function () {
-                base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.edit + '"]', function () {
+                try {
+                    base.doUpdate($(this).siblings("input").val(), $(this).data("uri"));
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //Show action, this will open a form
-            base.table.on('click', 'span[data-action = "find"]', function () {
-                base.doShow($(this).siblings("input").val());
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.show + '"]', function () {
+                try {
+                    base.doShow($(this).siblings("input").val());
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //This directly deletes directly the
-            base.table.on('click', 'span[data-action = "clear"]', function () {
-                base.doDelete($(this).data("uri"), $(this).siblings("input").val());
+            base.table.on('click', 'span[data-action = "' + base.options.actionsNames.delete + '"]', function () {
+                try {
+                    base.doShowConfirmModal($(this).data("uri"), $(this).siblings("input").val());
+                    //base.doDelete($(this).data("uri"), $(this).siblings("input").val());
+                } catch (e) {
+                    console.log(e);
+                }
             });
 
             //SEND buttons events
@@ -81,109 +94,83 @@
                 var table = $(this).closest('table');
                 table.find("input[type = 'checkbox']").prop('checked', $(this).is(":checked"));
             });
-        };
 
-        /**
-         * Makes a ajax request to load the event status, only needed to adapt the form
-         */
-        base.setEventStatus = function () {
-            base.doProcessRequest(base.options.eventStatusUri, "GET", {}, function (data) {
-                base.eventStatus = data;
-            })
-        };
-
-        /**
-         * Makes a ajax request to load the event type, only needed to adapt the form
-         */
-        base.setEventTypes = function () {
-            base.doProcessRequest(base.options.eventTypeUri, "GET", {}, function (data) {
-                base.eventTypes = data;
-            })
-        };
-
-        /**
-         * Looks for a key in an object by a given value
-         * @param val
-         * @param o
-         * @returns {string}
-         */
-        base.getKey = function (val, o) {
-            var key = "";
-            $.each(o, function (k, v) {
-                if (v == val.trim()) {
-                    key = k;
-                }
+            //Modal event
+            base.$el.find("#modal_"+base.id+" button[data-action = 'confirmDeletion']").on("click", function(){
+                base.doDelete(base.$el.find(".modal").data("uri"), base.$el.find(".modal").data("object"));
             });
 
-            return key;
+            //Interval to put styles into checkbox using the uniform plugin
+            setInterval(function(){base.doCallUniformPlugin()}, 100);
         };
 
         //CRUD Methods
         /**
-         * Creates a form instance into the formWrapper div and makes the new object to insert it on the api
-         * @param uri
+         * Generic function that using the common attributes of any action and getting the different ones process the action
+         * @param diffOptions
          */
-        base.doAdd = function (uri) {
-            try {
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: {eventGroup: base.options.eventGroup},
+        base.doGenerateForm = function (diffOptions) {
+            var defOptions = {
+                restService: {
+                    host: base.options.host,
                     structure: base.options.actions,
-                    onSaveFunction: function (data) {
-                        base.doProcessRequest(uri, "POST", base.doGenerateFormattedObject(data), function () {
-                            toastr.success("Element correctly added");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
-            }
-            catch (e) {
-                console.log("Error adding the form");
-            }
+                    structureArrayIndex: base.options.defaultFormRestAttributes.structureArrayIndex,
+                    innerUriDataAttribute: base.options.defaultFormRestAttributes.innerUriDataAttribute
+                },
+                toastAdvice: true,
+                onFinishRender: function (data) {
+                    base.options.onRenderItemForm(data);
+                }
+            };
+            new jQuery.DwecProject.Form(base.$el.find("div[data-action='formWrapper']"), null, $.extend({}, defOptions, diffOptions));
         };
 
         /**
-         * TODO: Find a way to send to the form data that can be read it. This will be useful for update and show
+         * Adds an element
+         * @param uri
+         */
+        base.doAdd = function (uri) {
+            base.doGenerateForm({
+                wrapperTitle: base.options.formTitles.add,
+                extraData: base.options.initialObject(),
+                onSaveFunction: function (data) {
+                    base.doProcessRequest(uri, "POST", data, function () {
+                        toastr.success(base.options.successCRUDMessages.add);
+                        base.dataTable.ajax.reload(null, false);
+                    })
+                }
+            });
+        };
+
+        /**
+         * Updates an element
          * @param o
          * @param uri
          */
         base.doUpdate = function (o, uri) {
-                var newObject = {};
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: JSON.parse(o),
-                    structure: base.options.actions,
-                    onSaveFunction: function (data) {
-                        for (var i = 0; i < base.fieldsArray.length; i++) {
-                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
-                        }
-                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
-                            toastr.success("Element correctly edited");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
+            base.doGenerateForm({
+                wrapperTitle: base.options.formTitles.edit,
+                extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                onSaveFunction: function (data) {
+                    base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", data, function () {
+                        toastr.success(base.options.successCRUDMessages.edit);
+                        base.dataTable.ajax.reload(null, false);
+                    })
+                }
+            })
         };
 
+        /**
+         * Shows an element using form
+         * @param o
+         */
         base.doShow = function (o) {
-            try {
-                var newObject = {};
-                new jQuery.Plugin.Form(base.$el.find("div[data-action='formWrapper']"), null, {
-                    formData: JSON.parse(o),
-                    structure: base.options.actions,
-                    hiddenButtons: true,
-                    onSaveFunction: function (data) {
-                        for (var i = 0; i < base.fieldsArray.length; i++) {
-                            newObject[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
-                        }
-                        base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "PUT", newObject, function () {
-                            toastr.success("Element correctly edited");
-                            base.dataTable.ajax.reload(null, false);
-                        })
-                    }
-                });
-            }
-            catch (e) {
-
-            }
+            base.doGenerateForm({
+                wrapperTitle: base.options.formTitles.show,
+                extraData: base.doGenerateFormProcessableObject(JSON.parse(o)),
+                buttonHidden: true,
+                readOnly: true
+            });
         };
 
         /**
@@ -193,35 +180,26 @@
          */
         base.doDelete = function (uri, o) {
             base.doProcessRequest(base.format(uri, {id: JSON.parse(o)[base.options.idColumn]}), "DELETE", {}, function () {
-                toastr.success("This element has been correctly removed", "Deleting");
-                try {
-                    base.dataTable.ajax.reload(null, false);
-                    base.dataTable.clear(); //Need this in case of removing last element
-                }
-                catch (e) {
-                    console.log(e);
-                }
+                toastr.success(base.options.successCRUDMessages.delete);
+                base.dataTable.ajax.reload(null, false);
+                base.dataTable.clear(); //Need this in case of removing last element
             });
         };
 
         /**
-         * Generates a correct event or event group object using the data of the form.
+         * By a given object generates an object that can be processed by a form to display the date in case of show or update action
          * @param data
          * @returns {{}}
          */
-        base.doGenerateFormattedObject = function(data){
+        base.doGenerateFormProcessableObject = function (data) {
             var o = {};
             for (var i = 0; i < base.fieldsArray.length; i++) {
-                if (base.fieldsArray[i].type == 'json')// at the moment without && == null
-                    o[base.fieldsArray[i].name] = JSON.parse('{"data":[]}');
-                else if (base.fieldsArray[i].type == 'optionList') {
-                    if (base.fieldsArray[i].name == 'eventType')
-                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventTypes);
-                    else
-                        o[base.fieldsArray[i].name] = base.getKey(data[base.fieldsArray[i].name], base.eventStatus);
-                }
+                if (base.fieldsArray[i].type == 'optionList')
+                    o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name].itemLabel;
+                else if (base.fieldsArray[i].type == 'date')
+                    o[base.fieldsArray[i].name] = moment(data[base.fieldsArray[i].name]).format("YYYY-MM-DD");
                 else
-                    o[base.fieldsArray[i].name] = (base.fieldsArray[i].name == 'eventGroup') ? {id: base.options.eventGroup} : data[base.fieldsArray[i].name];
+                    o[base.fieldsArray[i].name] = data[base.fieldsArray[i].name];
             }
             return o;
         };
@@ -258,7 +236,11 @@
         base.getHttpStatusFromOptions = function (o) {
             var statusObject = {};
             $.each(o, function (k, v) {
-                statusObject[k] = (k.indexOf('2') == 0) ? function () { toastr.success(v);} : function () { toastr.error(v);}
+                statusObject[k] = (k.indexOf('2') == 0) ? function () {
+                    toastr.success(v);
+                } : function () {
+                    toastr.error(v);
+                }
             });
 
             return statusObject;
@@ -283,6 +265,7 @@
             }
             base.$el.append(base.format(base.options.templates.buttonGroup, {buttons: buttons}));
             base.$el.append(base.options.templates.divForm);
+            base.$el.append(base.format(base.options.templates.divModal, {id: "modal_"+base.id}));
         };
 
         /**
@@ -294,11 +277,11 @@
             try {
                 var endPos = template.lastIndexOf("/");
                 var startPos = template.lastIndexOf("/", endPos - 1);
-
                 return template.substring(startPos + 1, endPos)
             }
             catch (e) {
                 console.log(e);
+                return "";
             }
         };
 
@@ -315,9 +298,21 @@
 
             base.$el.append(table);
             base.doGenerateDatatablesObject(base.getDataForDataTables());
+            base.renderModal();
             base.addEvents();
         };
 
+        /**
+         * This calls the uniform plugin to render correctly the checkboxes
+         */
+        base.doCallUniformPlugin = function(){
+            try{
+                $("input[type='checkbox']").uniform({radioClass: 'choice'});
+            }
+            catch(e){
+                console.log("Uniform plugin not found! Add js and css references to the html");
+            }
+        };
 
         /**
          * Generic function that choose which method call according to the "o" value
@@ -399,7 +394,7 @@
                         [5, 10, 25, 50, 100, -1],
                         [5, 10, 25, 50, 100, "All"]
                     ],
-                    "sAjaxDataProp": "",
+                    "sAjaxDataProp": "",  //This property is deprecated since version 1.9. The equivalent is dataSrc but it can't be used in property "ajax" as a function
                     "ajax": function (data, callback, settings) {
                         settings.jqXHR = $.ajax({
                             url: base.options.host + base.options.ajaxTable.url,
@@ -451,6 +446,30 @@
             return rapidActions;
         };
 
+        //MODAL
+        base.renderModal = function () {
+            base.$el.find("#modal_"+base.id).html(base.getModalString());
+        };
+
+        base.getModalString = function () {
+            return base.format('<div class="modal fade" role="dialog"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{title}</h4></div><div class="modal-footer"><button type="button" class="btn sbold green" data-dismiss="modal" data-action = "confirmDeletion">{proceed}</button><button type="button" class="btn sbold" data-dismiss="modal" data-action = "cancelDeletion">{cancel}</button></div></div></div></div></div>',
+                {
+                    title:base.options.confirmModal.title,
+                    proceed: base.options.confirmModal.success,
+                    cancel: base.options.confirmModal.cancel
+                });
+        };
+
+        /**
+         * Shows the modal to confirm a deletion and saves the data needed for the deletion via data attributes
+         */
+        base.doShowConfirmModal = function (uri, value) {
+            base.$el.find(".modal").data("uri", uri);
+            base.$el.find(".modal").data("object", value);
+            base.$el.find(".modal").modal("show");
+        };
+
+        //HELPERS
         /**
          * Returns a formatted hidden input with the content of the full object for the form
          * @param data
@@ -489,14 +508,15 @@
             table: "<table id='{id}' class='{classCss}'>{header}</table>",
             header: "<thead><tr>{elements}</tr></thead>",
             cell: "<th>{content}</th>",
-            rapidAction: "<span class = '{icon}' data-action='{action}' data-uri='{uri}' style='margin: 5px'></span>",
+            rapidAction: "<span class = '{icon} rapidAction' data-action='{action}' data-uri='{uri}'></span>",
             buttonGroup: "<div class='table-toolbar row'><div class='col-md-6 btn-group'>{buttons}</div></div>",
-            button: "<button class='btn sbold green' data-action='{action}' data-uri='{uri}'>{text} <span class='{icon}'></span></button>",
+            button: "<button class='btn sbold green minMarginForButtons' data-action='{action}' data-uri='{uri}'>{text} <span class='{icon}'></span></button>",
             input: "<input type='{type}' value ='{value}'>",
-            divForm: "<div data-action='formWrapper'></div>"
+            divForm: "<div data-action='formWrapper'></div>",
+            divModal: "<div id = '{id}' data-action='modalWrapper'></div>"
         },
         classes: {
-            table: "table table-striped table-bordered table-hover table-checkable order-column"
+            table: "table table-bordered table-hover table-checkable order-column"
         },
         httpStatus: {
             400: "Bad Request",
@@ -506,9 +526,38 @@
             415: "Unsupported Media Type",
             500: "Internal Server Error"
         },
-        eventGroup: 32,
-        eventTypeUri:"getEventTypes",
-        eventStatusUri:"getEventStatus"
+        initialObject: function () {
+            return {eventGroup: {id: 32}};
+        },
+        defaultFormRestAttributes: {
+            structureArrayIndex: "fields",
+            innerUriDataAttribute: "uriData"
+        },
+        formTitles: {
+            add: "Adding Element",
+            edit: "Updating Element",
+            show: "Showing Element"
+        },
+        //This must to match with the uris of the api e.g: events/add
+        actionsNames: {
+            add: "add",
+            edit: "set",
+            show: "find",
+            delete: "clear"
+        },
+        successCRUDMessages: {
+            add: "Element correctly added!",
+            edit: "Element correctly updated!",
+            delete: "Element correctly deleted!"
+        },
+        confirmModal:{
+            title:"Do you want to delete this?",
+            success:"Sure",
+            cancel:"Forget it..."
+        },
+        onRenderItemForm: function (data) {
+
+        }
     };
 
     /**

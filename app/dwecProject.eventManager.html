@@ -97,15 +97,13 @@
                         <span class="caption-subject font-green-sharp bold uppercase">Draggable Chart</span>
                     </div>
                     <div class="actions">
-                        <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="#" data-original-title=""
-                           title=""> </a>
+                        <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="#" data-original-title="" title=""> </a>
                     </div>
                 </div>
                 <div class="portlet-body">
                     <!--BEGIN TABS-->
-                    <div class="tab-content">
-                        <button class="btn btn-default" id="btnOn">Draggable On</button>
-                        <button class="btn btn-default" id="btnOff">Draggable Off</button>
+                    <div class="tab-content table-responsive">
+                        <div id="liveTable"></div>
                         <div id="am-graph" style="min-height: 400px;"></div>
                     </div>
                     <!--END TABS-->
@@ -158,61 +156,15 @@
 <!--REQUIREMENTS-->
 <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
 <script src="https://www.amcharts.com/lib/3/serial.js"></script>
+<script src="http://momentjs.com/downloads/moment-with-locales.min.js"></script>
 <script src="scripts/eventManager/dwecProject.gFunctions.js"></script>
 <script src="scripts/eventManager/dwecProject.draggableChart.js"></script>
+<script src="scripts/eventManager/dwecProject.liveTable.js"></script>
+<script src="scripts/eventManager/dwecProject.dragAndLiveSync.js"></script>
 <!--END REQUIREMENTS-->
 
 <!-- Initializer script -->
-<script type="text/javascript">
-    $(document).ready(function () {
-
-        var data = {
-            "dataProvider": [{
-                "date": "16/02/2016",
-                "id": 14,
-                "INTENSITY": 10,
-                "VOLUME": 0
-            }, {
-                "date": "16/02/2016",
-                "id": 15,
-                "INTENSITY": 0,
-                "VOLUME": 10
-            }, {
-                "date": "16/02/2016",
-                "id": 16,
-                "INTENSITY": 10,
-                "VOLUME": 0
-            }, {
-                "date": "16/02/2016",
-                "id": 17,
-                "INTENSITY": 0,
-                "VOLUME": 10
-            }],
-            "graphs": [{
-                "lineColor": "#a312b7",
-                "bullet": "round",
-                "title": "intensity",
-                "valueField": "INTENSITY",
-                "type": "smoothedLine"
-            }, {
-                "lineColor": "#723945",
-                "bullet": "round",
-                "title": "volume",
-                "valueField": "VOLUME",
-                "type": "smoothedLine"
-            }]
-        };
-
-        var grafica = new $.dwecProject.draggableChart($('#am-graph'), data, {});
-
-        $('#btnOn').click(function () {
-            grafica.options.draggable = true;
-        });
-        $('#btnOff').click(function () {
-            grafica.options.draggable = false;
-        });
-    });
-</script>
+<script type="text/javascript" src="scripts/eventManager/main.js"></script>
 </body>
 
 </html>
